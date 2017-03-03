@@ -27,9 +27,10 @@
   <modules>
     <module>org.eclipse.tracecompass.extension.analysis.core</module>
     <module>org.eclipse.tracecompass.extension.analysis.core.tests</module>
-    <module>org.eclipse.tracecompass.extension.timing.core</module>
-    <module>org.eclipse.tracecompass.extension.timing.core.tests</module>
-    <module>org.eclipse.tracecompass.extension.timing.ui</module>
+    <module>org.eclipse.tracecompass.extension.callstack.core</module>
+    <module>org.eclipse.tracecompass.extension.callstack.core.tests</module>
+    <module>org.eclipse.tracecompass.extension.callstack.ui</module>
+    <module>org.eclipse.tracecompass.extension.callstack</module>
   </modules>
 
 </project>

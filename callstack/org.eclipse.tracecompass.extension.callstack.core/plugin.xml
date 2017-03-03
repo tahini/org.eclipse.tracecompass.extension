@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.tracecompass.tmf.analysis.xml.core.xsd">
+      <xsdfile
+            file="src/org/eclipse/tracecompass/extension/internal/callstack/xml/core/callstack/xmlCallstack.xsd">
+      </xsdfile>
+      <schemaParser
+            class="org.eclipse.tracecompass.extension.internal.callstack.xml.core.callstack.CallstackXmlSchemaParser">
+      </schemaParser>
+   </extension>
+
+</plugin>
