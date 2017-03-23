@@ -6,5 +6,8 @@
    <feature url="features/org.eclipse.tracecompass.extension.callstack_1.0.0.qualifier.jar" id="org.eclipse.tracecompass.extension.callstack" version="1.0.0.qualifier">
       <category name="Trace Compass Extension"/>
    </feature>
+   <feature url="features/org.eclipse.tracecompass.extension.provisioning_1.0.0.qualifier.jar" id="org.eclipse.tracecompass.extension.provisioning" version="1.0.0.qualifier">
+      <category name="Trace Compass Extension"/>
+   </feature>
    <category-def name="Trace Compass Extension" label="Trace Compass Extension Features"/>
 </site>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.ui.commands">
+      <command
+            categoryId="org.eclipse.linuxtools.tmf.ui.commands.category"
+            defaultHandler="org.eclipse.tracecompass.extension.internal.tmf.ui.experimental.wizard.ManageExperimentalFeaturesHandler"
+            description="%command.manage_experimental.description"
+            id="org.eclipse.tracecompass.tmf.ui.command.manage_experimental"
+            name="%command.manage_experimental">
+      </command>
+   </extension>
+ <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            allPopups="false"
+            locationURI="menu:org.eclipse.ui.main.menu">
+         <menu
+               id="org.eclipse.tracecompass.rcp.ui.menu.experimental"
+               label="%menu.main.experimental">         
+            <command
+                  commandId="org.eclipse.tracecompass.tmf.ui.command.manage_experimental"
+                  style="push">
+            </command>
+         </menu>
+      </menuContribution>
+   </extension>
+</plugin>

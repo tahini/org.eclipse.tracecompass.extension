@@ -276,6 +276,7 @@
     <module>org.eclipse.tracecompass.extension.target</module>
     <module>callstack</module>    
     <module>org.eclipse.tracecompass.extension.releng-site</module>
+    <module>provisioning</module>
   </modules>
 
   <build>
