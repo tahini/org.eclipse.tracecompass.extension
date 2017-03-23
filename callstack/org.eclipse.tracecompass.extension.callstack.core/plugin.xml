@@ -4,7 +4,7 @@
    <extension
          point="org.eclipse.tracecompass.tmf.analysis.xml.core.xsd">
       <xsdfile
-            file="src/org/eclipse/tracecompass/extension/internal/callstack/xml/core/callstack/xmlCallstack.xsd">
+            file="xsd_files/xmlCallstack.xsd">
       </xsdfile>
       <schemaParser
             class="org.eclipse.tracecompass.extension.internal.callstack.xml.core.callstack.CallstackXmlSchemaParser">
