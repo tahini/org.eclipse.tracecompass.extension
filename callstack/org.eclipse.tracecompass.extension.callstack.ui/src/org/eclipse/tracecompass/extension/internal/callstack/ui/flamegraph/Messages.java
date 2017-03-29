@@ -97,6 +97,10 @@ public class Messages extends NLS {
      * Go to minimum duration
      */
     public static String FlameGraphView_GotoMinDuration;
+    /** The action name for grouping */
+    public static String FlameGraphView_GroupByName;
+    /** The action tooltip for grouping */
+    public static String FlameGraphView_GroupByTooltip;
     /**
      * The action name for sorting by thread name
      */

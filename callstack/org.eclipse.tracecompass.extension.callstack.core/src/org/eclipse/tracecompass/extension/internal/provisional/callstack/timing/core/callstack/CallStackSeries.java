@@ -15,6 +15,7 @@ import java.util.List;
 
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.Nullable;
+import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callstack.CallStackAllGroupDescriptor;
 import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callstack.CallStackElement;
 import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callstack.CallStackGroupDescriptor;
 import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callstack.CallStackLeafElement;
@@ -42,8 +43,8 @@ public class CallStackSeries {
          *
          * @param time
          *            The time of request
-         * @return The ID of the thread, or
-         *         {@link IHostModel#UNKNOWN_TID} if unavailable
+         * @return The ID of the thread, or {@link IHostModel#UNKNOWN_TID} if
+         *         unavailable
          */
         int getTheadId(long time);
 
@@ -239,6 +240,7 @@ public class CallStackSeries {
     }
 
     private final ICallStackGroupDescriptor fRootGroup;
+    private final ICallStackGroupDescriptor fAllGroup;
     private final String fName;
     private @Nullable IThreadIdResolver fResolver;
 
@@ -276,6 +278,7 @@ public class CallStackSeries {
         fRootGroup = prevLevel;
         fName = name;
         fResolver = threadResolver;
+        fAllGroup = new CallStackAllGroupDescriptor(this);
     }
 
     /**
@@ -294,6 +297,16 @@ public class CallStackSeries {
      */
     public ICallStackGroupDescriptor getRootGroup() {
         return fRootGroup;
+    }
+
+    /**
+     * Get a group descriptor that describes the aggregation of all groups of
+     * the series
+     *
+     * @return The group descriptor for all series
+     */
+    public ICallStackGroupDescriptor getAllGroup() {
+        return fAllGroup;
     }
 
     /**

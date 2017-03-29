@@ -16,7 +16,6 @@ import static org.junit.Assert.fail;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.tracecompass.extension.callstack.timing.core.tests.callstack.CallStackTestBase;
@@ -69,9 +68,10 @@ public class CallGraphWithCallStackAnalysisTest extends CallStackTestBase {
         CallGraphAnalysis cga = getCallGraphModule();
 
         try {
-            List<GroupNode> threadNodes = cga.getGroupNodes();
+            Collection<AggregatedCalledFunction> threadNodes = cga.getGroupNodes();
             assertEquals(4, threadNodes.size());
-            for (GroupNode groupNode : threadNodes) {
+            for (AggregatedCalledFunction rootNode : threadNodes) {
+                GroupNode groupNode = (GroupNode) rootNode;
                 ICallStackElement parentElement2 = groupNode.getElement().getParentElement();
                 assertNotNull(parentElement2);
                 ICallStackElement parentElement = parentElement2.getParentElement();
@@ -353,9 +353,10 @@ public class CallGraphWithCallStackAnalysisTest extends CallStackTestBase {
 
         CallGraphAnalysis cga = getCallGraphModule();
         try {
-            List<GroupNode> threadNodes = cga.getGroupNodes();
+            Collection<AggregatedCalledFunction> threadNodes = cga.getGroupNodes();
             assertEquals(4, threadNodes.size());
-            for (GroupNode groupNode : threadNodes) {
+            for (AggregatedCalledFunction rootNode : threadNodes) {
+                GroupNode groupNode = (GroupNode) rootNode;
                 ICallStackElement parentElement2 = groupNode.getElement().getParentElement();
                 assertNotNull(parentElement2);
                 ICallStackElement parentElement = parentElement2.getParentElement();

@@ -11,8 +11,11 @@ package org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgr
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -22,11 +25,13 @@ import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.tracecompass.analysis.timing.core.segmentstore.IAnalysisProgressListener;
 import org.eclipse.tracecompass.analysis.timing.core.segmentstore.ISegmentStoreProvider;
 import org.eclipse.tracecompass.common.core.StreamUtils;
+import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callstack.CallStackAllGroupDescriptor;
 import org.eclipse.tracecompass.extension.internal.provisional.analysis.core.model.IHostModel;
 import org.eclipse.tracecompass.extension.internal.provisional.analysis.core.model.ModelManager;
 import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.CallStack;
 import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.CallStackSeries;
 import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackElement;
+import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackGroupDescriptor;
 import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackLeafElement;
 import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackProvider;
 import org.eclipse.tracecompass.segmentstore.core.ISegment;
@@ -87,6 +92,8 @@ public class CallGraphAnalysis extends TmfAbstractAnalysisModule implements ISeg
      * function as children
      */
     private List<GroupNode> fThreadNodes = new ArrayList<>();
+
+    private @Nullable ICallStackGroupDescriptor fGroupBy = null;
 
     /**
      * Default constructor
@@ -214,132 +221,22 @@ public class CallGraphAnalysis extends TmfAbstractAnalysisModule implements ISeg
 
     }
 
-    // /**
-    // * Iterate over the process of the state system,then iterate over the
-    // * different threads of each process.
-    // *
-    // * @param ss
-    // * The state system
-    // * @param threadsPattern
-    // * The threads pattern
-    // * @param processesPattern
-    // * The processes pattern
-    // * @param callStackPath
-    // * The call stack path
-    // * @param monitor
-    // * The monitor
-    // * @return Boolean
-    // */
-    // @VisibleForTesting
-    // protected boolean iterateOverProcesses(@Nullable ITmfStateSystem ss,
-    // String[] threadsPattern, String[] processesPattern, String[]
-    // callStackPath, IProgressMonitor monitor) {
-    // if (ss == null) {
-    // return false;
-    // }
-    // List<Integer> processQuarks = ss.getQuarks(processesPattern);
-    // for (int processQuark : processQuarks) {
-    // int processId = getProcessId(ss, processQuark, ss.getCurrentEndTime());
-    // for (int threadQuark : ss.getQuarks(processQuark, threadsPattern)) {
-    // if (!iterateOverThread(ss, processId, threadQuark, callStackPath,
-    // monitor)) {
-    // return false;
-    // }
-    // }
-    // }
-    // sendUpdate(fStore);
-    // return true;
-    // }
-    //
-    // /**
-    // * Iterate over functions with the same quark,search for their callees
-    // then
-    // * add them to the segment store
-    // *
-    // * @param stateSystem
-    // * The state system
-    // * @param processId
-    // * The process ID of the traced application
-    // * @param threadQuark
-    // * The thread quark
-    // * @param subAttributePath
-    // * sub-Attributes path
-    // * @param monitor
-    // * The monitor
-    // * @return Boolean
-    // */
-    // private boolean iterateOverThread(ITmfStateSystem stateSystem, int
-    // processId, int threadQuark, String[] subAttributePath, IProgressMonitor
-    // monitor) {
-    //
-    // }
-    //
-    // /**
-    // * Find the functions called by a parent function in a call stack then add
-    // * segments for each child, updating the self times of each node
-    // * accordingly.
-    // *
-    // * @param functionCall
-    // * The segment of the stack call event(the parent) callStackQuark
-    // * @param depth
-    // * The depth of the parent function
-    // * @param ss
-    // * The quark of the segment parent ss The actual state system
-    // * @param callStackQuarks
-    // * The last quark in the state system
-    // * @param aggregatedCall
-    // * A node in the aggregation tree
-    // * @param processId
-    // * The process ID of the traced application
-    // * @param monitor
-    // * The progress monitor The progress monitor TODO: if stack size
-    // * is an issue, convert to a stack instead of recursive function
-    // */
-    // private boolean iterateOnStackRecursive(AbstractCalledFunction
-    // functionCall, int depth, ITmfStateSystem ss, List<Integer>
-    // callStackQuarks, AggregatedCalledFunction aggregatedCall, int processId,
-    // IProgressMonitor monitor) {
-    // fStore.add(functionCall);
-    //
-    // // Quick return if we reached the end of the stack
-    // if (callStackQuarks.size() <= depth + 1) {
-    // return true;
-    // }
-    // long curTime = functionCall.getStart();
-    // long limit = functionCall.getEnd();
-    // ITmfStateInterval interval = null;
-    // while (curTime < limit) {
-    // if (monitor.isCanceled()) {
-    // return false;
-    // }
-    // try {
-    // interval = ss.querySingleState(curTime, callStackQuarks.get(depth + 1));
-    // } catch (StateSystemDisposedException e) {
-    // Activator.getInstance().logError(Messages.QueringStateSystemError, e);
-    // return false;
-    // }
-    // ITmfStateValue stateValue = interval.getStateValue();
-    // if (!stateValue.isNull()) {
-    // long intervalStart = interval.getStartTime();
-    // long intervalEnd = interval.getEndTime();
-    // if (intervalStart < functionCall.getStart() || intervalEnd > limit) {
-    // return true;
-    // }
-    // AbstractCalledFunction childCall =
-    // CalledFunctionFactory.create(intervalStart, intervalEnd + 1,
-    // functionCall.getDepth() + 1, stateValue, processId, functionCall);
-    // AggregatedCalledFunction childAggregated = new
-    // AggregatedCalledFunction(childCall, aggregatedCall);
-    // // Search for the children with the next quark.
-    // iterateOnStackRecursive(childCall, depth + 1, ss, callStackQuarks,
-    // childAggregated, processId, monitor);
-    // aggregatedCall.addChild(childAggregated);
-    // functionCall.addChild(childCall);
-    // }
-    // curTime = interval.getEndTime() + 1;
-    // }
-    // return true;
-    // }
+    /**
+     * Get the callstack series of the providers of this analysis
+     *
+     * @return The collection of callstack series
+     */
+    public Collection<CallStackSeries> getSeries() {
+        List<CallStackSeries> series = new ArrayList<>();
+        for (IAnalysisModule dependent : getDependentAnalyses()) {
+            if (!(dependent instanceof ICallStackProvider)) {
+                continue;
+            }
+            ICallStackProvider csProvider = (ICallStackProvider) dependent;
+            series.addAll(csProvider.getCallStackSeries());
+        }
+        return series;
+    }
 
     @Override
     public void addListener(@NonNull IAnalysisProgressListener listener) {
@@ -398,13 +295,62 @@ public class CallGraphAnalysis extends TmfAbstractAnalysisModule implements ISeg
      *
      * @return The thread nodes
      */
-    public List<GroupNode> getGroupNodes() {
-        return ImmutableList.copyOf(fThreadNodes);
+    public List<AggregatedCalledFunction> getGroupNodes() {
+        ICallStackGroupDescriptor groupBy = fGroupBy;
+        List<GroupNode> threadNodes = fThreadNodes;
+        ITmfTrace trace = getTrace();
+        if (trace == null) {
+            return Collections.emptyList();
+        }
+        IHostModel model = ModelManager.getModelFor(trace.getHostId());
+        if (groupBy instanceof CallStackAllGroupDescriptor) {
+            AbstractCalledFunction initSegment = CalledFunctionFactory.create(0, 0, 0, "", 0, 0, null, model); //$NON-NLS-1$
+            AggregatedCalledFunction init = new AggregatedCalledFunction(initSegment, 3);
+            threadNodes.forEach(
+                    tn -> tn.getChildren().forEach(
+                            child -> init.addChild(initSegment, child)));
+            return Collections.singletonList(init);
+        }
+        if (groupBy == null) {
+            return ImmutableList.copyOf(threadNodes);
+        }
+        ICallStackGroupDescriptor nextGroup = groupBy.getNextGroup();
+        // Leaf group, return with the thread nodes
+        if (nextGroup == null) {
+            return ImmutableList.copyOf(threadNodes);
+        }
+        Map<ICallStackElement, GroupNode> map = new HashMap<>();
+        // Group the leaf nodes by the requested group descriptor
+        AbstractCalledFunction initSegment = CalledFunctionFactory.create(0, 0, 0, "", 0, 0, null, model); //$NON-NLS-1$
+        threadNodes.forEach(tn -> {
+            ICallStackElement element = tn.getElement(nextGroup);
+            GroupNode acf = map.get(element);
+            if (acf == null) {
+                acf = new GroupNode(initSegment, element, tn.getMaxDepth(), element.getName());
+                map.put(element, acf);
+            }
+            // FIXME The aggregate modifies the child
+            final AggregatedCalledFunction aggregate = acf;
+            tn.getChildren().forEach(
+                    child -> aggregate.addChild(initSegment, child));
+        });
+        return ImmutableList.copyOf(map.values());
     }
 
     @Override
     public Iterable<ISegmentAspect> getSegmentAspects() {
         return Collections.EMPTY_LIST;
+    }
+
+    /**
+     * Set the group descriptor by which to group the callgraph data
+     *
+     * @param descriptor
+     *            The descriptor by which to group the callgraph elements, or
+     *            <code>null</code> will group them all together
+     */
+    public void setGroupBy(@Nullable ICallStackGroupDescriptor descriptor) {
+        fGroupBy = descriptor;
     }
 
 }

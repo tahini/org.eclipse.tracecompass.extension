@@ -18,6 +18,11 @@ import org.eclipse.osgi.util.NLS;
  */
 public class Messages extends NLS {
     private static final String BUNDLE_NAME = Messages.class.getPackage().getName() + ".messages"; //$NON-NLS-1$
+
+    /**
+     * Name of the group by "All" descriptors
+     */
+    public static @Nullable String CallGraphAnalysis_AllDescriptors;
     /**
      * Analysis description for the help
      */

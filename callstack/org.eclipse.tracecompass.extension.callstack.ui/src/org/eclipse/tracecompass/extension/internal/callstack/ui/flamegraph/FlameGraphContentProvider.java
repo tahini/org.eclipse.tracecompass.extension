@@ -25,7 +25,6 @@ import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph.AggregatedCalledFunction;
 import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph.GroupNode;
 import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackElement;
-import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackLeafElement;
 import org.eclipse.tracecompass.tmf.ui.widgets.timegraph.ITimeGraphContentProvider;
 import org.eclipse.tracecompass.tmf.ui.widgets.timegraph.model.ITimeGraphEntry;
 import org.eclipse.tracecompass.tmf.ui.widgets.timegraph.model.TimeGraphEntry;
@@ -117,8 +116,8 @@ public class FlameGraphContentProvider implements ITimeGraphContentProvider {
         if (inputElement instanceof Collection<?>) {
             Collection<?> threadNodes = (Collection<?>) inputElement;
             for (Object object : threadNodes) {
-                if (object instanceof GroupNode) {
-                    buildChildrenEntries((GroupNode) object);
+                if (object instanceof AggregatedCalledFunction) {
+                    buildChildrenEntries((AggregatedCalledFunction) object);
                 }
             }
         } else {
@@ -136,12 +135,16 @@ public class FlameGraphContentProvider implements ITimeGraphContentProvider {
      * @param groupNode
      *            The node of the aggregation tree
      */
-    private void buildChildrenEntries(GroupNode groupNode) {
+    private void buildChildrenEntries(AggregatedCalledFunction groupNode) {
         //long endTime = fActiveTrace.getStartTime().toNanos() - fActiveTrace.getEndTime().toNanos();
         TimeGraphEntry threadEntry = new TimeGraphEntry(groupNode.getSymbol().toString(), 0L, 0L);
         // Create the hierarchy for this group element
-        ICallStackLeafElement element = groupNode.getElement();
-        ICallStackElement parentElement = element.getParentElement();
+        ICallStackElement parentElement = null;
+        if (groupNode instanceof GroupNode) {
+            GroupNode gn = (GroupNode) groupNode;
+            ICallStackElement element = gn.getElement();
+            parentElement = element.getParentElement();
+        }
         TimeGraphEntry groupRootEntry = threadEntry;
         boolean found = false;
         while (parentElement != null && !found) {

@@ -13,11 +13,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.Nullable;
+import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.CallStackSeries.IThreadIdResolver;
 import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackElement;
 import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackGroupDescriptor;
-import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.CallStackSeries.IThreadIdResolver;
 import org.eclipse.tracecompass.statesystem.core.ITmfStateSystem;
 
 /**
@@ -99,6 +100,11 @@ public class CallStackGroupDescriptor implements ICallStackGroupDescriptor {
             elements.add(element);
         }
         return elements;
+    }
+
+    @Override
+    public @NonNull String getName() {
+        return StringUtils.join(fSubPattern, '/');
     }
 
 }

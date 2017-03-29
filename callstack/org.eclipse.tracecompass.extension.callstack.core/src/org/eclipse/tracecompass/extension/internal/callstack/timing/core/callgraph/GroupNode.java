@@ -9,7 +9,9 @@
 
 package org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph;
 
-import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackLeafElement;
+import org.eclipse.jdt.annotation.Nullable;
+import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackElement;
+import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackGroupDescriptor;
 
 /**
  * This class represents one thread. It's used as a root node for the aggregated
@@ -20,7 +22,7 @@ import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.
 public class GroupNode extends AggregatedCalledFunction {
 
     private final String fId;
-    private final ICallStackLeafElement fElement;
+    private final ICallStackElement fElement;
 
     /**
      * @param calledFunction
@@ -32,7 +34,7 @@ public class GroupNode extends AggregatedCalledFunction {
      * @param id
      *            The thread id
      */
-    public GroupNode(AbstractCalledFunction calledFunction, ICallStackLeafElement element, int maxDepth, String id) {
+    public GroupNode(AbstractCalledFunction calledFunction, ICallStackElement element, int maxDepth, String id) {
         super(calledFunction, maxDepth);
         fId = id;
         fElement = element;
@@ -52,8 +54,22 @@ public class GroupNode extends AggregatedCalledFunction {
      *
      * @return The callstack leaf element
      */
-    public ICallStackLeafElement getElement() {
+    public ICallStackElement getElement() {
         return fElement;
+    }
+
+    /**
+     * Get the callstack element of this group for a given group descriptor
+     *
+     * @param descriptor The descriptor to match
+     * @return The callstack element
+     */
+    public ICallStackElement getElement(@Nullable ICallStackGroupDescriptor descriptor) {
+        ICallStackElement element = fElement;
+        while (element != null && element.getNextGroup() != descriptor) {
+            element = element.getParentElement();
+        }
+        return (element == null ? fElement : element);
     }
 
 }

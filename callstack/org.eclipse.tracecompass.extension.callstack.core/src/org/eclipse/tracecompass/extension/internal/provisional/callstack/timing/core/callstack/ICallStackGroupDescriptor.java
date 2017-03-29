@@ -95,4 +95,11 @@ public interface ICallStackGroupDescriptor {
      */
     boolean isSymbolKeyGroup();
 
+    /**
+     * Get the human-readable name for this group descriptor
+     *
+     * @return The name of this group descriptor
+     */
+    String getName();
+
 }

@@ -11,6 +11,7 @@
  *******************************************************************************/
 package org.eclipse.tracecompass.extension.internal.callstack.ui.flamegraph;
 
+import java.util.Collection;
 import java.util.concurrent.Semaphore;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -18,9 +19,12 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.ActionContributionItem;
 import org.eclipse.jface.action.GroupMarker;
 import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.action.IMenuCreator;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
@@ -36,11 +40,14 @@ import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph.CallGraphAnalysis;
 import org.eclipse.tracecompass.extension.internal.callstack.ui.Activator;
 import org.eclipse.tracecompass.extension.internal.callstack.ui.callgraph.CallGraphAnalysisUI;
+import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.CallStackSeries;
+import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackGroupDescriptor;
 import org.eclipse.tracecompass.segmentstore.core.ISegment;
 import org.eclipse.tracecompass.tmf.core.signal.TmfSelectionRangeUpdatedSignal;
 import org.eclipse.tracecompass.tmf.core.signal.TmfSignalHandler;
@@ -80,6 +87,7 @@ public class FlameGraphView extends TmfView {
     private static final ImageDescriptor SORT_BY_NAME_REV_ICON = Activator.getDefault().getImageDescripterFromPath("icons/etool16/sort_alpha_rev.gif"); //$NON-NLS-1$
     private static final ImageDescriptor SORT_BY_ID_ICON = Activator.getDefault().getImageDescripterFromPath("icons/etool16/sort_num.gif"); //$NON-NLS-1$
     private static final ImageDescriptor SORT_BY_ID_REV_ICON = Activator.getDefault().getImageDescripterFromPath("icons/etool16/sort_num_rev.gif"); //$NON-NLS-1$
+    private static final ImageDescriptor AGGREGATE_BY_ICON = Activator.getDefault().getImageDescripterFromPath("icons/etool16/sort_num_rev.gif"); //$NON-NLS-1$
 
     private TimeGraphViewer fTimeGraphViewer;
 
@@ -90,6 +98,7 @@ public class FlameGraphView extends TmfView {
     private ITmfTrace fTrace;
 
     private final @NonNull MenuManager fEventMenuManager = new MenuManager();
+    private Action fAggregateByAction;
     private Action fSortByNameAction;
     private Action fSortByIdAction;
     /**
@@ -164,10 +173,19 @@ public class FlameGraphView extends TmfView {
     @TmfSignalHandler
     public void traceSelected(final TmfTraceSelectedSignal signal) {
         fTrace = signal.getTrace();
-        if (fTrace != null) {
-            CallGraphAnalysis flamegraphModule = TmfTraceUtils.getAnalysisModuleOfClass(fTrace, CallGraphAnalysis.class, CallGraphAnalysisUI.ID);
-            buildFlameGraph(flamegraphModule);
+        CallGraphAnalysis module = getCallgraphModule();
+        if (module != null) {
+            buildFlameGraph(module);
         }
+    }
+
+    private @Nullable CallGraphAnalysis getCallgraphModule() {
+        ITmfTrace trace = fTrace;
+        if (trace == null) {
+            return null;
+        }
+        CallGraphAnalysis module = TmfTraceUtils.getAnalysisModuleOfClass(trace, CallGraphAnalysis.class, CallGraphAnalysisUI.ID);
+        return module;
     }
 
     /**
@@ -348,9 +366,80 @@ public class FlameGraphView extends TmfView {
     }
 
     private void fillLocalToolBar(IToolBarManager manager) {
+        manager.add(getAggregateByAction());
         manager.add(getSortByNameAction());
         manager.add(getSortByIdAction());
         manager.add(new Separator());
+    }
+
+    private Action getAggregateByAction() {
+        if (fAggregateByAction == null) {
+            fAggregateByAction = new Action(Messages.FlameGraphView_GroupByName, IAction.AS_DROP_DOWN_MENU) {
+                @Override
+                public void run() {
+                    SortOption sortOption = fTimeGraphContentProvider.getSortOption();
+                    if (sortOption == SortOption.BY_NAME) {
+                        setSortOption(SortOption.BY_NAME_REV);
+                    } else {
+                        setSortOption(SortOption.BY_NAME);
+                    }
+                }
+            };
+            fAggregateByAction.setToolTipText(Messages.FlameGraphView_GroupByTooltip);
+            fAggregateByAction.setImageDescriptor(AGGREGATE_BY_ICON);
+            fAggregateByAction.setMenuCreator(new IMenuCreator () {
+                Menu menu = null;
+                @Override
+                public void dispose() {
+                    if (menu != null) {
+                        menu.dispose();
+                        menu = null;
+                    }
+                }
+
+                @Override
+                public Menu getMenu(Control parent) {
+                    if (menu != null) {
+                        menu.dispose();
+                    }
+                    menu = new Menu(parent);
+                    CallGraphAnalysis callgraphModule = getCallgraphModule();
+                    if (callgraphModule == null) {
+                        return menu;
+                    }
+                    Collection<@NonNull CallStackSeries> series = callgraphModule.getSeries();
+                    series.forEach(s -> {
+                        ICallStackGroupDescriptor group = s.getAllGroup();
+                        Action groupAction = createActionForGroup(callgraphModule, group);
+                        new ActionContributionItem(groupAction).fill(menu, -1);
+                        group = s.getRootGroup();
+                        do {
+                            groupAction = createActionForGroup(callgraphModule, group);
+                            new ActionContributionItem(groupAction).fill(menu, -1);
+                            group = group.getNextGroup();
+                        } while (group != null);
+                    });
+                    return menu;
+                }
+
+                @Override
+                public Menu getMenu(Menu parent) {
+                    return null;
+                }
+            });
+        }
+        return fAggregateByAction;
+    }
+
+    private Action createActionForGroup(CallGraphAnalysis callgraphModule, ICallStackGroupDescriptor descriptor) {
+        final Action groupAction = new Action(descriptor.getName(), IAction.AS_RADIO_BUTTON) {
+            @Override
+            public void run() {
+                callgraphModule.setGroupBy(descriptor);
+                buildFlameGraph(callgraphModule);
+            }
+        };
+        return groupAction;
     }
 
     private Action getSortByNameAction() {
