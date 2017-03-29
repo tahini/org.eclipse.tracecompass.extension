@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<CustomTxtTraceDefinitionList>
+
+
+
+<Definition category="TMF" name="TraceCompassLog">
+<TimeStampOutputFormat>HH:mm:ss.SSS SSS SSS</TimeStampOutputFormat>
+<InputLine>
+<Cardinality max="2147483647" min="0"/>
+<RegEx>\s*\[(\d*\.\d*)\]\s*\[TID=(\d*)\]\s*\[([\w|\.|:\s]*)\]\s*\[([\w|\.|:\s]*)\]</RegEx>
+<InputData action="0" format="ss.SSS SSS SSS" name="Timestamp" tag="TIMESTAMP"/>
+<InputData action="0" format="" name="int_threadid" tag="OTHER"/>
+<InputData action="0" format="" name="logger_name" tag="OTHER"/>
+<InputData action="0" format="" name="Event type" tag="EVENT_TYPE"/>
+</InputLine>
+<InputLine>
+<Cardinality max="2147483647" min="0"/>
+<RegEx>\s*\[(\d*\.\d*)\]\s*\[TID=(\d*)\]\s*\[([\w|\.|:\s]*)\]\s*\[([\w|\.|:\s]*)\]\s*([\w|\.]*)=([^,]*)</RegEx>
+<InputData action="0" format="ss.SSS SSS SSS" name="Timestamp" tag="TIMESTAMP"/>
+<InputData action="0" format="" name="int_threadid" tag="OTHER"/>
+<InputData action="0" format="" name="logger_name" tag="OTHER"/>
+<InputData action="0" format="" name="Event type" tag="EVENT_TYPE"/>
+<InputData action="2" format="" name="Extra field name" tag="EVENT_FIELDS_NAME"/>
+<InputData action="2" format="" name="Extra field value" tag="EXTRA_FIELDS_VALUE"/>
+</InputLine>
+<InputLine>
+<Cardinality max="2147483647" min="0"/>
+<RegEx>\s*\[(\d*\.\d*)\]\s*\[TID=(\d*)\]\s*\[([\w|\.|:\s]*)\]\s*\[([\w|\.|:\s]*)\]\s*([\w|\.]*)=([^,]*),\s([\w|\.]*)=([^,]*)</RegEx>
+<InputData action="0" format="ss.SSS SSS SSS" name="Timestamp" tag="TIMESTAMP"/>
+<InputData action="0" format="" name="int_threadid" tag="OTHER"/>
+<InputData action="0" format="" name="logger_name" tag="OTHER"/>
+<InputData action="0" format="" name="Event type" tag="EVENT_TYPE"/>
+<InputData action="2" format="" name="Extra field name" tag="EVENT_FIELDS_NAME"/>
+<InputData action="2" format="" name="Extra field value" tag="EXTRA_FIELDS_VALUE"/>
+<InputData action="2" format="" name="Extra field name" tag="EVENT_FIELDS_NAME"/>
+<InputData action="2" format="" name="Extra field value" tag="EXTRA_FIELDS_VALUE"/>
+</InputLine>
+<InputLine>
+<Cardinality max="2147483647" min="0"/>
+<RegEx>\s*\[(\d*\.\d*)\]\s*\[TID=(\d*)\]\s*\[([\w|\.|:\s]*)\]\s*\[([\w|\.|:\s]*)\]\s*([\w|\.]*)=([^,]*),\s([\w|\.]*)=([^,]*),\s([\w|\.]*)=([^,]*)</RegEx>
+<InputData action="0" format="ss.SSS SSS SSS" name="Timestamp" tag="TIMESTAMP"/>
+<InputData action="0" format="" name="int_threadid" tag="OTHER"/>
+<InputData action="0" format="" name="logger_name" tag="OTHER"/>
+<InputData action="0" format="" name="Event type" tag="EVENT_TYPE"/>
+<InputData action="2" format="" name="Extra field name" tag="EVENT_FIELDS_NAME"/>
+<InputData action="2" format="" name="Extra field value" tag="EXTRA_FIELDS_VALUE"/>
+<InputData action="2" format="" name="Extra field name" tag="EVENT_FIELDS_NAME"/>
+<InputData action="2" format="" name="Extra field value" tag="EXTRA_FIELDS_VALUE"/>
+<InputData action="2" format="" name="Extra field name" tag="EVENT_FIELDS_NAME"/>
+<InputData action="2" format="" name="Extra field value" tag="EXTRA_FIELDS_VALUE"/>
+</InputLine>
+<InputLine>
+<Cardinality max="2147483647" min="0"/>
+<RegEx>\s*\[(\d*\.\d*)\]\s*\[TID=(\d*)\]\s*\[([\w|\.|:\s]*)\]\s*\[([\w|\.|:\s]*)\]\s*([\w|\.]*)=([^,]*),\s([\w|\.]*)=([^,]*),\s([\w|\.]*)=([^,]*),\s([\w|\.]*)=([^,]*)</RegEx>
+<InputData action="0" format="ss.SSS SSS SSS" name="Timestamp" tag="TIMESTAMP"/>
+<InputData action="0" format="" name="int_threadid" tag="OTHER"/>
+<InputData action="0" format="" name="logger_name" tag="OTHER"/>
+<InputData action="0" format="" name="Event type" tag="EVENT_TYPE"/>
+<InputData action="2" format="" name="Extra field name" tag="EVENT_FIELDS_NAME"/>
+<InputData action="2" format="" name="Extra field value" tag="EXTRA_FIELDS_VALUE"/>
+<InputData action="2" format="" name="Extra field name" tag="EVENT_FIELDS_NAME"/>
+<InputData action="2" format="" name="Extra field value" tag="EXTRA_FIELDS_VALUE"/>
+<InputData action="2" format="" name="Extra field name" tag="EVENT_FIELDS_NAME"/>
+<InputData action="2" format="" name="Extra field value" tag="EXTRA_FIELDS_VALUE"/>
+<InputData action="2" format="" name="Extra field name" tag="EVENT_FIELDS_NAME"/>
+<InputData action="2" format="" name="Extra field value" tag="EXTRA_FIELDS_VALUE"/>
+</InputLine>
+<OutputColumn name="Timestamp" tag="TIMESTAMP"/>
+<OutputColumn name="int_threadid" tag="OTHER"/>
+<OutputColumn name="logger_name" tag="OTHER"/>
+<OutputColumn name="Event type" tag="EVENT_TYPE"/>
+<OutputColumn name="Extra field name" tag="EVENT_FIELDS_NAME"/>
+<OutputColumn name="Extra field value" tag="EXTRA_FIELDS_VALUE"/>
+</Definition>
+</CustomTxtTraceDefinitionList>

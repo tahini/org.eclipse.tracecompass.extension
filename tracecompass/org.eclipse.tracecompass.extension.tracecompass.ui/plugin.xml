@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.ui.views">
+      <view
+            allowMultiple="false"
+            category="org.eclipse.linuxtools.tmf.ui.views.category"
+            class="ca.polymtl.tracecompass.internal.jul.analysis.ui.responsiveness.views.UiResponseStatisticsView"
+            id="ca.polymtl.tracecompass.jul.analysis.uiresponse.view"
+            name="%view.ui.response.stats"
+            restorable="true">
+      </view>
+      <view
+            allowMultiple="false"
+            category="org.eclipse.linuxtools.lttng2.ui.views.category"
+            class="ca.polymtl.tracecompass.internal.jul.analysis.ui.latency.views.JulEventLatencyScatterView"
+            id="ca.polymtl.tracecompass.jul.analysis.scatter"
+            name="Scatter chart"
+            restorable="true">
+       </view>
+       <view
+            allowMultiple="false"
+            category="org.eclipse.linuxtools.lttng2.ui.views.category"
+            class="ca.polymtl.tracecompass.internal.jul.analysis.ui.latency.views.JulEventLatencyDensityView"
+            id="ca.polymtl.tracecompass.jul.analysis.density"
+            name="Density chart"
+            restorable="true">
+       </view>
+   </extension>
+   <extension
+         point="org.eclipse.linuxtools.tmf.core.analysis">
+      <output
+            class="org.eclipse.tracecompass.tmf.ui.analysis.TmfAnalysisViewOutput"
+            id="ca.polymtl.tracecompass.jul.analysis.uiresponse.view">
+         <analysisId
+               id="ca.polymtl.tracecompass.jul.ui.response">
+         </analysisId>
+      </output>
+      <output
+            class="org.eclipse.tracecompass.tmf.ui.analysis.TmfAnalysisViewOutput"
+            id="ca.polymtl.tracecompass.jul.analysis.scatter">
+         <analysisId
+               id="org.eclipse.tracecompass.examples.tracecompass.timing">
+         </analysisId>
+      </output>
+      <output
+            class="org.eclipse.tracecompass.tmf.ui.analysis.TmfAnalysisViewOutput"
+            id="ca.polymtl.tracecompass.jul.analysis.density">
+         <analysisId
+               id="org.eclipse.tracecompass.examples.tracecompass.timing">
+         </analysisId>
+      </output>
+   </extension>
+   <extension
+         point="org.eclipse.ui.startup">
+      <startup
+            class="ca.polymtl.tracecompass.internal.jul.analysis.ui.startup.JulFileFormatterStartup">
+      </startup>
+   </extension>
+   <extension
+         point="org.eclipse.linuxtools.tmf.ui.tracetypeui">
+      <type
+            icon="icons/obj16/tc_jul.png"
+            tracetype="ca.polymtl.tracecompass.lttng.jul.trace">
+      </type>
+   </extension>
+   
+</plugin>

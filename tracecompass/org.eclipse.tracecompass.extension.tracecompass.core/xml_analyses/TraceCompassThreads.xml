@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tmfxml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../org.eclipse.tracecompass.tmf.analysis.xml.core/src/org/eclipse/tracecompass/tmf/analysis/xml/core/module/xmlDefinition.xsd">
+    <pattern version="0" id="ca.polymtl.tracecompass.jul.threads">
+        <head>
+            <traceType id="org.eclipse.tracecompass.tmf.core.parsers.custom.CustomTxtTrace:TMF:TraceCompassLog" />
+            <traceType id="ca.polymtl.tracecompass.lttng.jul.trace" />
+            <label value="TraceCompass Threads" />
+        </head>   
+    	
+    	<callstack name="Thread callstack">
+    		<level path="Threads/*" /> 
+    		<level path="callstack" /> 
+    		<thread cpu="../cpu" /> 
+    	</callstack>
+    	     
+		<patternHandler>
+		
+			<!-- CONDITIONS -->
+	
+			<!-- ACTIONS -->
+	
+			<test id="begin_phase">
+				<if>
+					<condition>
+						<stateValue type="eventField" value="phase" forcedType="string"/>
+						<stateValue type="string" value="B" />
+					</condition>
+				</if>
+			</test>
+			<test id="end_phase">
+				<if>
+					<condition>
+						<stateValue type="eventField" value="phase" forcedType="string"/>
+						<stateValue type="string" value="E" />
+					</condition>
+				</if>
+			</test>
+			
+			<action id="push_event_type">
+				<!-- Push the current event to the thread's callstack -->
+				<stateChange>
+				    <stateAttribute type="constant" value="Threads" />
+	                <stateAttribute type="eventField" value="int_threadid" />
+	                <stateAttribute type="constant" value="callstack" />
+					<stateValue type="eventName" stack="push"/>
+	            </stateChange>
+	            <stateChange>
+	                <stateAttribute type="constant" value="Threads" />
+	                <stateAttribute type="eventField" value="int_threadid" />
+	                <stateAttribute type="constant" value="cpu" />
+					<stateValue type="eventField" value="cpu" />
+	            </stateChange>
+			</action>
+	
+			<action id="pop_event_type">
+				<!-- Pop the current event from the callstack -->
+				<stateChange>
+				    <stateAttribute type="constant" value="Threads" />
+	                <stateAttribute type="eventField" value="int_threadid" />
+	                <stateAttribute type="constant" value="callstack" />
+					<stateValue type="eventName" stack="pop"/>
+	            </stateChange>
+			</action>
+	
+			<!-- FSMs -->
+	
+			<fsm id="tgThread" multiple="false" initial="state">
+				<state id="state">
+					<!-- The state will stay here until we have a thread start event -->
+					<transition event="*" cond="begin_phase" target="state" action="push_event_type"/>
+					<transition event="*" cond="end_phase" target="state" action="pop_event_type"/>
+				</state>
+			</fsm>
+	
+		</patternHandler>
+	</pattern>
+	
+	<timeGraphView id="ca.polymtl.tracecompass.jul.threads.callstack">
+		<head>
+	    	<analysis id="ca.polymtl.tracecompass.jul.threads" />
+			<label value="Trace Compass Threads Callstack" />
+		</head>
+		
+		<entry path="Threads/*">
+	    	<display type="self" />
+	    	<entry path="callstack/*">		
+	    			<display type="self" />		
+			</entry>
+		</entry>
+	
+	</timeGraphView>
+
+</tmfxml>

@@ -1,0 +1,718 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tmfxml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../org.eclipse.tracecompass.tmf.analysis.xml.core/src/org/eclipse/tracecompass/tmf/analysis/xml/core/module/xmlDefinition.xsd">
+    <pattern version="1" id="ca.polymtl.tracecompass.jul.ui.response">
+        <head>
+            <traceType id="org.eclipse.tracecompass.tmf.core.parsers.custom.CustomTxtTrace:TMF:TraceCompassLog" />
+            <traceType id="ca.polymtl.tracecompass.lttng.jul.trace" />
+            <label value="Time Graph View Threads Analysis" />
+        </head>   
+        
+        <location id="CurrentThread">
+        	<stateAttribute type="constant" value="Views" />
+			<stateAttribute type="query">
+				<stateAttribute type="constant" value="#CurrentScenario" />
+				<stateAttribute type="constant" value="component" />
+			</stateAttribute>
+			<stateAttribute type="query">
+				<stateAttribute type="constant" value="Views" />
+				<stateAttribute type="query">
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="component" />
+				</stateAttribute>
+			</stateAttribute>
+			<stateAttribute type="constant" value="Threads" />
+			<stateAttribute type="pool" />
+    	</location>
+    	
+    	<location id="CurrentUiThread">
+        	<stateAttribute type="constant" value="Views" />
+			<stateAttribute type="query">
+				<stateAttribute type="constant" value="#CurrentScenario" />
+				<stateAttribute type="constant" value="component" />
+			</stateAttribute>
+			<stateAttribute type="query">
+				<stateAttribute type="constant" value="Views" />
+				<stateAttribute type="query">
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="component" />
+				</stateAttribute>
+			</stateAttribute>
+			<stateAttribute type="constant" value="Threads" />
+			<stateAttribute type="constant" value="UI" />
+    	</location>
+    	
+    	<callstack name="UI thread callstack">
+    		<level path="UIThread"/> 
+    	</callstack>
+    	<callstack name="Per views callstack">
+    		<level path="Views/*" /> 
+    		<level path="*" />
+    		<level path="Threads/*"/> 
+    		<level path="callstack"/>
+    		<thread cpu="../cpu" /> 
+    	</callstack>
+    	<!-- callstack process="Views/*" thread="Threads/*" callstack="callstack" / -->
+	        
+		<patternHandler>
+		
+			<!-- CONDITIONS -->
+		
+			<!-- Test if the current running thread is equal to the current scenario thread -->
+			<test id="thread_thread">
+				<if>
+					<condition>
+						<stateValue type="eventField" value="int_threadid" forcedType="int"/>
+						<stateValue type="query">
+							<stateAttribute type="constant" value="#CurrentScenario" />
+							<stateAttribute type="constant" value="threadID" />
+						</stateValue>
+					</condition>
+				</if>
+			</test>
+	
+			<!-- ACTIONS -->
+	
+			<!-- Actions and test for time graph view threads -->
+			<action id="entering_thread">
+				<!-- Initialize current scenario data: component, type of thread, queries and drawing event counts -->
+				<stateChange>
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="threadID" />
+					<stateValue type="eventField" value="int_threadid" forcedType="int"/>
+				</stateChange>
+				<stateChange>
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="type" />
+					<stateValue type="eventName" />
+				</stateChange>
+				<stateChange>
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="component" />
+					<stateValue type="eventField" value="viewId" />
+				</stateChange>
+				<stateChange>
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="fqCount" />
+					<stateValue type="int" value="0" />
+				</stateChange>
+				<stateChange>
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="sqCount" />
+					<stateValue type="int" value="0" />
+				</stateChange>
+				<stateChange>
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="cacheLookup" />
+					<stateValue type="int" value="0" />
+				</stateChange>
+				<stateChange>
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="cacheMiss" />
+					<stateValue type="int" value="0" />
+				</stateChange>
+				<stateChange>
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="redrawCount" />
+					<stateValue type="int" value="0" />
+				</stateChange>
+				<stateChange>
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="refreshCount" />
+					<stateValue type="int" value="0" />
+				</stateChange>
+			</action>
+	
+			<action id="thread_done">
+				<!-- Generate a segment for this thread -->
+				<segment>
+					<segType>
+						<segName>
+							<stateValue type="query">
+							<stateAttribute type="constant" value="#CurrentScenario" />
+							<stateAttribute type="constant" value="type" />
+						</stateValue>	
+						</segName>
+					</segType>
+					<segContent>
+						<segField name="threadID" type="int">
+							<stateValue type="query">
+								<stateAttribute type="constant" value="#CurrentScenario" />
+								<stateAttribute type="constant" value="threadID" />
+							</stateValue>
+						</segField>
+						<segField name="component" type="string">
+							<stateValue type="query">
+								<stateAttribute type="constant" value="#CurrentScenario" />
+								<stateAttribute type="constant" value="component" />
+							</stateValue>
+						</segField>
+						<segField name="fullQuery" type="int">
+							<stateValue type="query">
+								<stateAttribute type="constant" value="#CurrentScenario" />
+								<stateAttribute type="constant" value="fqCount" />
+							</stateValue>
+						</segField>
+						<segField name="singleQuery" type="int">
+							<stateValue type="query">
+								<stateAttribute type="constant" value="#CurrentScenario" />
+								<stateAttribute type="constant" value="sqCount" />
+							</stateValue>
+						</segField>
+						<segField name="redraw" type="int">
+							<stateValue type="query">
+								<stateAttribute type="constant" value="#CurrentScenario" />
+								<stateAttribute type="constant" value="redrawCount" />
+							</stateValue>
+						</segField>
+						<segField name="refresh" type="int">
+							<stateValue type="query">
+								<stateAttribute type="constant" value="#CurrentScenario" />
+								<stateAttribute type="constant" value="refreshCount" />
+							</stateValue>
+						</segField>
+					</segContent>
+				</segment>
+			</action>
+	
+			<action id="inc_fq">
+				<!-- Increment the number of full queries for this thread -->
+				<stateChange>
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="fqCount" />
+					<stateValue type="int" value="1" increment="true"/>
+				</stateChange>
+			</action>
+	
+			<action id="inc_sq">
+				<!-- Increment the number of single queries for this thread -->
+				<stateChange>
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="sqCount" />
+					<stateValue type="int" value="1" increment="true"/>
+				</stateChange>
+			</action>
+	
+			<action id="inc_redraw">
+				<!-- Increment the number of redraws queries for this thread -->
+				<stateChange>
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="redrawCount" />
+					<stateValue type="int" value="1" increment="true"/>
+				</stateChange>
+				<stateChange>
+					<if>
+	                    <condition>
+	                        <stateValue type="eventField" value="int_threadid" forcedType="int"/>
+							<stateValue type="int" value="1" />
+	                    </condition>
+	                </if>
+	                <then>
+	                    <stateAttribute type="location" value="CurrentUiThread" />
+	                    <stateAttribute type="constant" value="redraw" />
+						<stateValue type="int" value="1" increment="true"/>
+	                </then>
+	                <else>
+	                    <stateAttribute type="location" value="CurrentThread" />
+	                    <stateAttribute type="constant" value="redraw" />
+						<stateValue type="int" value="1" increment="true"/>
+	                </else>	
+				</stateChange>
+			</action>
+			
+			<action id="inc_cachelook">
+				<!-- Increment the number of redraws queries for this thread -->
+				<stateChange>
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="cacheLookup" />
+					<stateValue type="int" value="1" increment="true"/>
+				</stateChange>
+				<stateChange>
+					<if>
+	                    <condition>
+	                        <stateValue type="eventField" value="int_threadid" forcedType="int"/>
+							<stateValue type="int" value="1" />
+	                    </condition>
+	                </if>
+	                <then>
+	                    <stateAttribute type="location" value="CurrentUiThread" />
+	                    <stateAttribute type="constant" value="cacheLookup" />
+						<stateValue type="query" >
+							<stateAttribute type="constant" value="#CurrentScenario" />
+							<stateAttribute type="constant" value="cacheLookup" />
+						</stateValue>
+	                </then>
+	                <else>
+	                    <stateAttribute type="location" value="CurrentThread" />
+	                    <stateAttribute type="constant" value="cacheLookup" />
+						<stateValue type="query" >
+							<stateAttribute type="constant" value="#CurrentScenario" />
+							<stateAttribute type="constant" value="cacheLookup" />
+						</stateValue>
+	                </else>	
+				</stateChange>
+			</action>
+			
+			<action id="inc_cachemiss">
+				<!-- Increment the number of redraws queries for this thread -->
+				<stateChange>
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="cacheMiss" />
+					<stateValue type="int" value="1" increment="true"/>
+				</stateChange>
+				<stateChange>
+					<if>
+	                    <condition>
+	                        <stateValue type="eventField" value="int_threadid" forcedType="int"/>
+							<stateValue type="int" value="1" />
+	                    </condition>
+	                </if>
+	                <then>
+	                    <stateAttribute type="location" value="CurrentUiThread" />
+	                    <stateAttribute type="constant" value="cacheMiss" />
+						<stateValue type="query" >
+							<stateAttribute type="constant" value="#CurrentScenario" />
+							<stateAttribute type="constant" value="cacheMiss" />
+						</stateValue>
+	                </then>
+	                <else>
+	                    <stateAttribute type="location" value="CurrentThread" />
+	                    <stateAttribute type="constant" value="cacheMiss" />
+						<stateValue type="query" >
+							<stateAttribute type="constant" value="#CurrentScenario" />
+							<stateAttribute type="constant" value="cacheMiss" />
+						</stateValue>
+	                </else>	
+				</stateChange>
+			</action>
+		
+			<action id="inc_refresh">
+				<!-- Increment the number of refreshes for this thread -->
+				<stateChange>
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="refreshCount" />
+					<stateValue type="int" value="1" increment="true"/>
+				</stateChange>
+				<stateChange>
+					<if>
+	                    <condition>
+	                        <stateValue type="eventField" value="int_threadid" forcedType="int"/>
+							<stateValue type="int" value="1" />
+	                    </condition>
+	                </if>
+	                <then>
+	                    <stateAttribute type="location" value="CurrentUiThread" />
+	                    <stateAttribute type="constant" value="refresh" />
+						<stateValue type="int" value="1" increment="true"/>
+	                </then>
+	                <else>
+	                    <stateAttribute type="location" value="CurrentThread" />
+	                    <stateAttribute type="constant" value="refresh" />
+						<stateValue type="int" value="1" increment="true"/>
+	                </else>
+				</stateChange>
+			</action>
+	
+			<action id="push_event_type">
+				<!-- Push the current event to the thread's callstack -->
+				<stateChange>
+	                <if>
+	                    <condition>
+	                        <stateValue type="eventField" value="int_threadid" forcedType="int"/>
+							<stateValue type="int" value="1" />
+	                    </condition>
+	                </if>
+	                <then>
+	                    <stateAttribute type="location" value="CurrentUiThread" />
+	                    <stateAttribute type="constant" value="callstack" />
+						<stateValue type="eventName" stack="push"/>
+	                </then>
+	                <else>
+	                    <stateAttribute type="location" value="CurrentThread" />
+	                    <stateAttribute type="constant" value="callstack" />
+						<stateValue type="eventName" stack="push"/>
+	                </else>
+	            </stateChange>
+	            <stateChange>
+	                <if>
+	                    <condition>
+	                        <stateValue type="eventField" value="int_threadid" forcedType="int"/>
+							<stateValue type="int" value="1" />
+	                    </condition>
+	                </if>
+	                <then>
+	                    <stateAttribute type="location" value="CurrentUiThread" />
+	                    <stateAttribute type="constant" value="cpu" />
+						<stateValue type="eventField" value="cpu" />
+	                </then>
+	                <else>
+	                    <stateAttribute type="location" value="CurrentThread" />
+	                    <stateAttribute type="constant" value="cpu" />
+						<stateValue type="eventField" value="cpu" />
+	                </else>
+	            </stateChange>
+	            <stateChange>
+					<if>
+	                    <condition>
+	                        <stateValue type="eventField" value="int_threadid" forcedType="int"/>
+							<stateValue type="int" value="1" />
+	                    </condition>
+	                </if>
+	                <then>
+	                    <stateAttribute type="constant" value="UIThread" />
+						<stateValue type="query" stack="push">
+							<stateAttribute type="constant" value="#CurrentScenario" />
+							<stateAttribute type="constant" value="component" />
+						</stateValue>
+	                </then>
+				</stateChange>
+			</action>
+	
+			<action id="pop_event_type">
+				<!-- Pop the current event from the callstack -->
+				<stateChange>
+					<if>
+	                    <condition>
+	                        <stateValue type="eventField" value="int_threadid" forcedType="int"/>
+							<stateValue type="int" value="1" />
+	                    </condition>
+	                </if>
+	                <then>
+	                    <stateAttribute type="location" value="CurrentUiThread" />
+	                    <stateAttribute type="constant" value="callstack" />
+						<stateValue type="eventName" stack="pop"/>
+	                </then>
+	                <else>
+	                    <stateAttribute type="location" value="CurrentThread" />
+	                    <stateAttribute type="constant" value="callstack" />
+						<stateValue type="eventName" stack="pop"/>
+	                </else>
+				</stateChange>
+				<stateChange>
+					<if>
+	                    <condition>
+	                        <stateValue type="eventField" value="int_threadid" forcedType="int"/>
+							<stateValue type="int" value="1" />
+	                    </condition>
+	                </if>
+	                <then>
+	                    <stateAttribute type="constant" value="UIThread" />
+						<stateValue type="string" value="a" stack="pop" />
+	                </then>
+				</stateChange>
+			</action>
+	
+			<!-- FSMs -->
+	
+			<fsm id="tgThread" initial="Wait_thread_start">
+				<state id="Wait_thread_start">
+					<!-- The state will stay here until we have a thread start event -->
+					<transition event="TimeGraphView:*ThreadStart" target="in_thread" action="entering_thread:push_event_type"/>
+				</state>
+				<state id="in_thread" >
+					<!-- The state will loop on itself until the thread ends and increment the operations that happen during the execution -->
+					<transition event="TimeGraphView:*ThreadEnd" cond="thread_thread" target="end_thread" action="thread_done:pop_event_type"/>
+					<transition event="TimeGraphView:*ThreadCanceled" cond="thread_thread" target="end_thread" action="pop_event_type"/>
+					<transition event="StateSystem:FullQueryStart" cond="thread_thread" target="in_thread" action="inc_fq:push_event_type"/>
+					<transition event="StateSystem:FullQueryEnd" cond="thread_thread" target="in_thread" action="pop_event_type"/>
+					<transition event="StateSystem:SingleQueryStart" cond="thread_thread" target="in_thread" action="inc_sq:push_event_type"/>
+					<transition event="StateSystem:SingleQueryEnd" cond="thread_thread" target="in_thread" action="pop_event_type"/>
+					<transition event="TimeGraphView:RedrawRequested" cond="thread_thread" target="in_thread" action="inc_redraw"/>
+					<transition event="TimeGraphView:RefreshRequested" cond="thread_thread" target="in_thread" action="inc_refresh"/>
+					<transition event="HtIo:CacheLookup" cond="thread_thread" target="in_thread" action="inc_cachelook"/>
+					<transition event="HtIo:CacheMiss" cond="thread_thread" target="in_thread" action="inc_cachemiss"/>
+					
+				</state>
+				<final id="end_thread"/>
+			</fsm>
+			
+			<test id="xy_thread">
+				<if>
+					<or>
+						<condition>
+							<stateValue type="eventField" value="tid" forcedType="int"/>
+							<stateValue type="query">
+								<stateAttribute type="constant" value="#CurrentScenario" />
+								<stateAttribute type="constant" value="threadID" />
+							</stateValue>
+						</condition>
+						<condition>
+							<stateValue type="eventField" value="int_threadid" forcedType="int"/>
+							<stateValue type="query">
+								<stateAttribute type="constant" value="#CurrentScenario" />
+								<stateAttribute type="constant" value="threadID" />
+							</stateValue>
+						</condition>
+					</or>
+				</if>
+			</test>
+			
+			<test id="ui_thread">
+				<if>
+					<and>
+						<condition>
+							<stateValue type="eventField" value="int_threadid" forcedType="int"/>
+							<stateValue type="int" value="1" />
+						</condition>
+						<condition>	
+							<stateValue type="query">
+								<stateAttribute type="constant" value="#CurrentScenario" />
+                    			<stateAttribute type="constant" value="inUi" />
+							</stateValue>
+							<stateValue type="int" value="1" />
+						</condition>
+					</and>
+				</if>
+			</test>
+			
+			<action id="pop_for_thread">
+				<!-- Pop the current event from the callstack -->
+				<stateChange>
+	                <if>
+	                    <condition>
+	                        <stateValue type="eventField" value="tid" forcedType="int"/>
+							<stateValue type="int" value="1" />
+	                    </condition>
+	                </if>
+	                <then>
+	                    <stateAttribute type="location" value="CurrentUiThread" />
+	                    <stateAttribute type="constant" value="callstack" />
+						<stateValue type="eventName" stack="pop"/>
+	                </then>
+	                <else>
+	                    <stateAttribute type="location" value="CurrentThread" />
+	                    <stateAttribute type="constant" value="callstack" />
+						<stateValue type="eventName" stack="pop"/>
+	                </else>
+	            </stateChange>
+			</action>
+			
+			<action id="set_ui_thread">
+				<!-- Pop the current event from the callstack -->
+				<stateChange>
+					<if>
+						<condition>
+							<stateValue type="eventField" value="int_threadid" forcedType="int"/>
+							<stateValue type="int" value="1" />
+						</condition>
+					</if>
+					<then>
+                    	<stateAttribute type="constant" value="#CurrentScenario" />
+                    	<stateAttribute type="constant" value="inUi" />
+						<stateValue type="int" value="1"/>
+					</then>
+	            </stateChange>
+			</action>
+			<action id="unset_ui_thread">
+				<!-- Pop the current event from the callstack -->
+				<stateChange>
+                    <stateAttribute type="constant" value="#CurrentScenario" />
+                    <stateAttribute type="constant" value="inUi" />
+					<stateValue type="null"/>
+	            </stateChange>
+			</action>
+			
+			
+			<!-- Actions and test for time graph view threads -->
+			<action id="entering_xychart_thread">
+				<!-- Initialize current scenario data: component, type of thread, queries and drawing event counts -->
+				<stateChange>
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="threadID" />
+					<stateValue type="eventField" value="int_threadid" forcedType="int"/>
+				</stateChange>
+				<stateChange>
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="type" />
+					<stateValue type="eventName" />
+				</stateChange>
+				<stateChange>
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="component" />
+					<stateValue type="eventField" value="viewerId" />
+				</stateChange>
+				<stateChange>
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="fqCount" />
+					<stateValue type="int" value="0" />
+				</stateChange>
+				<stateChange>
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="sqCount" />
+					<stateValue type="int" value="0" />
+				</stateChange>
+				<stateChange>
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="redrawCount" />
+					<stateValue type="int" value="0" />
+				</stateChange>
+				<stateChange>
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="refreshCount" />
+					<stateValue type="int" value="0" />
+				</stateChange>
+			</action>
+			
+			<fsm id="xyChartThread" initial="Wait_thread_start">
+				<state id="Wait_thread_start">
+					<!-- The state will stay here until we have a thread start event -->
+					<transition event="TmfCommonXLineChart:*ThreadStart" target="in_thread" action="entering_xychart_thread:push_event_type"/>
+				</state>
+				<state id="in_thread" >
+					<!-- The state will loop on itself until the thread ends and increment the operations that happen during the execution -->
+					<transition event="TmfCommonXLineChart:*ThreadEnd" cond="xy_thread" target="end_thread" action="thread_done:pop_event_type"/>
+					<transition event="TmfCommonXLineChart:*ThreadCanceled" cond="xy_thread" target="end_thread" action="pop_for_thread"/>
+					<transition event="TmfCommonXLineChart:UpdateDataStart" cond="xy_thread" target="in_thread" action="push_event_type:set_ui_thread"/>
+					<transition event="TmfCommonXLineChart:UpdateDataEnd" cond="xy_thread" target="in_thread" action="pop_event_type:unset_ui_thread"/>
+					<transition event="StateSystem:FullQueryStart" cond="xy_thread" target="in_thread" action="inc_fq:push_event_type"/>
+					<transition event="StateSystem:FullQueryEnd" cond="xy_thread" target="in_thread" action="pop_event_type"/>
+					<transition event="StateSystem:SingleQueryStart" cond="xy_thread" target="in_thread" action="inc_sq:push_event_type"/>
+					<transition event="StateSystem:SingleQueryEnd" cond="xy_thread" target="in_thread" action="pop_event_type"/>
+					<transition event="StateSystem:FullQueryStart" cond="ui_thread" target="in_thread" action="inc_fq:push_event_type"/>
+					<transition event="StateSystem:FullQueryEnd" cond="ui_thread" target="in_thread" action="pop_event_type"/>
+					<transition event="StateSystem:SingleQueryStart" cond="ui_thread" target="in_thread" action="inc_sq:push_event_type"/>
+					<transition event="StateSystem:SingleQueryEnd" cond="ui_thread" target="in_thread" action="pop_event_type"/>
+				</state>
+				<final id="end_thread"/>
+			</fsm>
+	
+			<action id="entering_draw_call">
+				<!-- Initialize current scenario data: component, type of thread, queries and drawing event counts -->
+				<stateChange>
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="threadID" />
+					<stateValue type="eventField" value="int_threadid" forcedType="int"/>
+				</stateChange>
+				<stateChange>
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="type" />
+					<stateValue type="eventName" />
+				</stateChange>
+				<stateChange>
+					<stateAttribute type="constant" value="#CurrentScenario" />
+					<stateAttribute type="constant" value="component" />
+					<stateValue type="eventField" value="viewId" />
+				</stateChange>
+			</action>
+	
+			<action id="draw_call_done">
+				<!-- Generate a segment for this thread -->
+				<segment>
+					<segType>
+						<segName>
+							<stateValue type="query">
+							<stateAttribute type="constant" value="#CurrentScenario" />
+							<stateAttribute type="constant" value="type" />
+						</stateValue>	
+						</segName>
+					</segType>
+					<segContent>
+						<segField name="threadID" type="int">
+							<stateValue type="query">
+								<stateAttribute type="constant" value="#CurrentScenario" />
+								<stateAttribute type="constant" value="threadID" />
+							</stateValue>
+						</segField>
+						<segField name="component" type="string">
+							<stateValue type="query">
+								<stateAttribute type="constant" value="#CurrentScenario" />
+								<stateAttribute type="constant" value="component" />
+							</stateValue>
+						</segField>
+					</segContent>
+				</segment>
+			</action>
+	
+	        <fsm id="redrawRefresh" initial="Wait_redraw_refresh">
+				<state id="Wait_redraw_refresh">
+					<!-- The state will stay here until we have refresh or redraw start -->
+					<transition event="TimeGraphView:RefreshStart" target="in_refresh" action="entering_draw_call:push_event_type"/>
+					<transition event="TimeGraphView:RedrawStart" target="in_redraw" action="entering_draw_call:push_event_type"/>
+				</state>
+				<state id="in_refresh" >
+					<!-- The state will stay here until we have a refresh enlogger_named event -->
+					<transition event="TimeGraphView:RefreshEnd" cond="thread_thread" target="end_thread" action="draw_call_done:pop_event_type"/>
+					<transition event="StateSystem:FullQueryStart" cond="thread_thread" target="in_refresh" action="inc_fq:push_event_type"/>
+					<transition event="StateSystem:FullQueryEnd" cond="thread_thread" target="in_refresh" action="pop_event_type"/>
+					<transition event="StateSystem:SingleQueryStart" cond="thread_thread" target="in_refresh" action="inc_sq:push_event_type"/>
+					<transition event="StateSystem:SingleQueryEnd" cond="thread_thread" target="in_refresh" action="pop_event_type"/>
+				</state>
+				<state id="in_redraw" >
+					<!-- The state will stay here until we have a redraw end event -->
+					<transition event="TimeGraphView:RedrawEnd" cond="thread_thread" target="end_thread" action="draw_call_done:pop_event_type"/>
+					<transition event="StateSystem:FullQueryStart" cond="thread_thread" target="in_redraw" action="inc_fq:push_event_type"/>
+					<transition event="StateSystem:FullQueryEnd" cond="thread_thread" target="in_redraw" action="pop_event_type"/>
+					<transition event="StateSystem:SingleQueryStart" cond="thread_thread" target="in_redraw" action="inc_sq:push_event_type"/>
+					<transition event="StateSystem:SingleQueryEnd" cond="thread_thread" target="in_redraw" action="pop_event_type"/>
+				</state>
+				<final id="end_thread"/>
+			</fsm>
+	
+			<action id="newTrace">
+				<!-- Update the trace name for this component -->
+				<stateChange>
+					<stateAttribute type="constant" value="Views" />
+					<stateAttribute type="eventField" value="viewId" />
+					<stateValue type="eventField" value="trace" forcedType="string"/>
+				</stateChange>
+			</action>
+	
+			<fsm id="tgTrace" multiple="false" initial="Wait_TraceLoad">
+				<precondition event="TimeGraphView:LoadingTrace" />
+				<state id="Wait_TraceLoad">
+					<!-- Looping in this state, waiting for trace load events -->
+					<transition event="TimeGraphView:LoadingTrace" target="Wait_TraceLoad" action="newTrace"/>
+				</state>
+			</fsm>
+			
+			<action id="newXyTrace">
+				<!-- Update the trace name for this component -->
+				<stateChange>
+					<stateAttribute type="constant" value="Views" />
+					<stateAttribute type="eventField" value="viewerId" />
+					<stateValue type="eventField" value="trace" forcedType="string"/>
+				</stateChange>
+			</action>
+	
+			<fsm id="xyTrace" multiple="false" initial="Wait_TraceLoad">
+				<precondition event="TmfCommonXLineChart:LoadingTrace" />
+				<state id="Wait_TraceLoad">
+					<!-- Looping in this state, waiting for trace load events -->
+					<transition event="TmfCommonXLineChart:LoadingTrace" target="Wait_TraceLoad" action="newXyTrace"/>
+				</state>
+			</fsm>
+	
+		</patternHandler>
+	</pattern>
+	
+	<timeGraphView id="ca.polymtl.tracecompass.jul.ui.response.callstack">
+		<head>
+	    	<analysis id="ca.polymtl.tracecompass.jul.ui.response" />
+			<label value="UI Threads Callstack" />
+		</head>
+		
+		<entry path="UIThread">
+	    	<display type="self" />
+	    	<entry path="*">		
+	    			<display type="self" />		
+			</entry>
+		</entry>
+	
+	    <entry path="Views/*">
+	    	<display type="self" />
+	    	<entry path="Threads/*">		
+	    			<display type="self" />	
+	    			<entry path="*">
+						<display type="self" /> <!-- Will display the function calls as children of the thread -->
+						<entry path="callstack/*">
+							<display type="self" /> <!-- Will display the function calls as children of the thread -->
+						</entry>
+					</entry>			
+			</entry>
+		</entry>
+	
+		<entry path="Components/*">
+			<display type="self" />
+		</entry>
+	</timeGraphView>
+
+</tmfxml>
