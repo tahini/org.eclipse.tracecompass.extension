@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <tmfxml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../org.eclipse.tracecompass.tmf.analysis.xml.core/src/org/eclipse/tracecompass/tmf/analysis/xml/core/module/xmlDefinition.xsd">
+<callstack id="ca.polymtl.tracecompass.jul.threads">
+	<callstackGroup name="Thread callstack">
+		<level path="Threads/*" /> 
+		<level path="callstack" /> 
+		<thread cpu="../cpu" /> 
+	</callstackGroup>
+	
     <pattern version="0" id="ca.polymtl.tracecompass.jul.threads">
         <head>
             <traceType id="org.eclipse.tracecompass.tmf.core.parsers.custom.CustomTxtTrace:TMF:TraceCompassLog" />
@@ -7,11 +14,7 @@
             <label value="TraceCompass Threads" />
         </head>   
     	
-    	<callstack name="Thread callstack">
-    		<level path="Threads/*" /> 
-    		<level path="callstack" /> 
-    		<thread cpu="../cpu" /> 
-    	</callstack>
+    	
     	     
 		<patternHandler>
 		
@@ -74,20 +77,20 @@
 	
 		</patternHandler>
 	</pattern>
+</callstack>
+<timeGraphView id="ca.polymtl.tracecompass.jul.threads.callstack">
+	<head>
+    	<analysis id="ca.polymtl.tracecompass.jul.threads" />
+		<label value="Trace Compass Threads Callstack" />
+	</head>
 	
-	<timeGraphView id="ca.polymtl.tracecompass.jul.threads.callstack">
-		<head>
-	    	<analysis id="ca.polymtl.tracecompass.jul.threads" />
-			<label value="Trace Compass Threads Callstack" />
-		</head>
-		
-		<entry path="Threads/*">
-	    	<display type="self" />
-	    	<entry path="callstack/*">		
-	    			<display type="self" />		
-			</entry>
+	<entry path="Threads/*">
+    	<display type="self" />
+    	<entry path="callstack/*">		
+    			<display type="self" />		
 		</entry>
-	
-	</timeGraphView>
+	</entry>
+
+</timeGraphView>
 
 </tmfxml>

@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <tmfxml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../org.eclipse.tracecompass.tmf.analysis.xml.core/src/org/eclipse/tracecompass/tmf/analysis/xml/core/module/xmlDefinition.xsd">
+<callstack id="callstack.analysis">
+	<callstackGroup name="UI thread callstack">
+		<level path="UIThread"/> 
+	</callstackGroup>
+	<callstackGroup name="Per views callstack">
+		<level path="Views/*" /> 
+		<level path="*" />
+		<level path="Threads/*"/> 
+		<level path="callstack"/>
+		<thread cpu="../cpu" /> 
+	</callstackGroup>
+	<!-- callstack process="Views/*" thread="Threads/*" callstack="callstack" / -->
+	
     <pattern version="1" id="ca.polymtl.tracecompass.jul.ui.response">
         <head>
             <traceType id="org.eclipse.tracecompass.tmf.core.parsers.custom.CustomTxtTrace:TMF:TraceCompassLog" />
@@ -40,18 +53,6 @@
 			<stateAttribute type="constant" value="Threads" />
 			<stateAttribute type="constant" value="UI" />
     	</location>
-    	
-    	<callstack name="UI thread callstack">
-    		<level path="UIThread"/> 
-    	</callstack>
-    	<callstack name="Per views callstack">
-    		<level path="Views/*" /> 
-    		<level path="*" />
-    		<level path="Threads/*"/> 
-    		<level path="callstack"/>
-    		<thread cpu="../cpu" /> 
-    	</callstack>
-    	<!-- callstack process="Views/*" thread="Threads/*" callstack="callstack" / -->
 	        
 		<patternHandler>
 		
@@ -683,36 +684,37 @@
 	
 		</patternHandler>
 	</pattern>
+</callstack>
 	
-	<timeGraphView id="ca.polymtl.tracecompass.jul.ui.response.callstack">
-		<head>
-	    	<analysis id="ca.polymtl.tracecompass.jul.ui.response" />
-			<label value="UI Threads Callstack" />
-		</head>
-		
-		<entry path="UIThread">
-	    	<display type="self" />
-	    	<entry path="*">		
-	    			<display type="self" />		
-			</entry>
+<timeGraphView id="ca.polymtl.tracecompass.jul.ui.response.callstack">
+	<head>
+    	<analysis id="ca.polymtl.tracecompass.jul.ui.response" />
+		<label value="UI Threads Callstack" />
+	</head>
+	
+	<entry path="UIThread">
+    	<display type="self" />
+    	<entry path="*">		
+    			<display type="self" />		
 		</entry>
-	
-	    <entry path="Views/*">
-	    	<display type="self" />
-	    	<entry path="Threads/*">		
-	    			<display type="self" />	
-	    			<entry path="*">
+	</entry>
+
+    <entry path="Views/*">
+    	<display type="self" />
+    	<entry path="Threads/*">		
+    			<display type="self" />	
+    			<entry path="*">
+					<display type="self" /> <!-- Will display the function calls as children of the thread -->
+					<entry path="callstack/*">
 						<display type="self" /> <!-- Will display the function calls as children of the thread -->
-						<entry path="callstack/*">
-							<display type="self" /> <!-- Will display the function calls as children of the thread -->
-						</entry>
-					</entry>			
-			</entry>
+					</entry>
+				</entry>			
 		</entry>
-	
-		<entry path="Components/*">
-			<display type="self" />
-		</entry>
-	</timeGraphView>
+	</entry>
+
+	<entry path="Components/*">
+		<display type="self" />
+	</entry>
+</timeGraphView>
 
 </tmfxml>

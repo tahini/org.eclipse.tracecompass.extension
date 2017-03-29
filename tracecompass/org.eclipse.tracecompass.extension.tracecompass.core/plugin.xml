@@ -13,7 +13,7 @@
          </tracetype>
       </module>
    </extension>
-   <extension
+   <!-- extension
          point="org.eclipse.linuxtools.tmf.core.tracetype">
       <type
             category="org.eclipse.linuxtools.tmf.ctf.core.category.ctf"
@@ -23,7 +23,7 @@
             name="LTTng TraceCompass JUL Trace"
             trace_type="ca.polymtl.tracecompass.internal.jul.analysis.core.trace.LttngTraceCompassJulTrace">
       </type>
-   </extension>
+   </extension -->
    <extension
          point="org.eclipse.linuxtools.tmf.analysis.xml.core.files">
       <xmlfile
