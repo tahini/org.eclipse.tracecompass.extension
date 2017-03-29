@@ -1,16 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
-   <extension
-         point="org.eclipse.ui.commands">
-      <command
-            categoryId="org.eclipse.linuxtools.tmf.ui.commands.category"
-            defaultHandler="org.eclipse.tracecompass.extension.internal.tmf.ui.experimental.wizard.ManageExperimentalFeaturesHandler"
-            description="%command.manage_experimental.description"
-            id="org.eclipse.tracecompass.tmf.ui.command.manage_experimental"
-            name="%command.manage_experimental">
-      </command>
-   </extension>
  <extension
          point="org.eclipse.ui.menus">
       <menuContribution
@@ -20,8 +10,17 @@
                id="org.eclipse.tracecompass.rcp.ui.menu.experimental"
                label="%menu.main.experimental">         
             <command
-                  commandId="org.eclipse.tracecompass.tmf.ui.command.manage_experimental"
+                  commandId="org.eclipse.equinox.p2.ui.discovery.commands.ShowRepositoryCatalog"
+                  label="%command.manage_experimental"
                   style="push">
+               <parameter
+                     name="org.eclipse.equinox.p2.ui.discovery.commands.RepositoryParameter"
+                     value="file:///home/gbastien/Dorsal/divers/extensionUpdateSite">
+               </parameter>
+               <parameter
+                     name="org.eclipse.equinox.p2.ui.discovery.commands.AllowUninstallParameter"
+                     value="true">
+               </parameter>
             </command>
          </menu>
       </menuContribution>

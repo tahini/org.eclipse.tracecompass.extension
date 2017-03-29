@@ -10,13 +10,6 @@ Bundle-Localization: plugin
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
- org.eclipse.equinox.p2.metadata,
- org.eclipse.tracecompass.extension.experimental.core,
- org.eclipse.equinox.p2.repository,
- org.eclipse.tracecompass.tmf.ui,
- org.eclipse.equinox.p2.ui,
- org.eclipse.equinox.p2.core,
- org.eclipse.equinox.p2.operations
-Export-Package: org.eclipse.tracecompass.extension.internal.experimental.ui,
- org.eclipse.tracecompass.extension.internal.tmf.ui.experimental.wizard;x-internal:=true
+ org.eclipse.tracecompass.tmf.ui
+Export-Package: org.eclipse.tracecompass.extension.internal.experimental.ui
 

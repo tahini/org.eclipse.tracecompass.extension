@@ -25,8 +25,6 @@
   <name>Trace Compass Extension Provisioning Parent</name>
 
   <modules>
-    <module>org.eclipse.tracecompass.extension.experimental.core</module>
-    <module>org.eclipse.tracecompass.extension.experimental.core.tests</module>
     <module>org.eclipse.tracecompass.extension.experimental.ui</module>
     <module>org.eclipse.tracecompass.extension.provisioning</module>
   </modules>
