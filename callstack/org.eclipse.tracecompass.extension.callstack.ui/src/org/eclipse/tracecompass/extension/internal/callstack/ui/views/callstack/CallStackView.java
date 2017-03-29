@@ -94,7 +94,7 @@ public class CallStackView extends AbstractTimeGraphView {
     // ------------------------------------------------------------------------
 
     /** View ID. */
-    public static final String ID = "org.eclipse.tracecompass.internal.analysis.timing.ui.views.callstack"; //$NON-NLS-1$
+    public static final String ID = "org.eclipse.tracecompass.extension.internal.analysis.timing.ui.views.callstack"; //$NON-NLS-1$
 
     private static final String[] COLUMN_NAMES = new String[] {
             Messages.CallStackView_FunctionColumn,

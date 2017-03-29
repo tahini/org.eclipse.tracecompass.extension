@@ -7,7 +7,7 @@
             analysis_module="org.eclipse.tracecompass.extension.internal.callstack.ui.callgraph.CallGraphAnalysisUI"
             automatic="false"
             icon="icons/elcl16/callgraph.png"
-            id="org.eclipse.tracecompass.internal.analysis.timing.ui.callgraph.callgraphanalysis"
+            id="org.eclipse.tracecompass.extension.internal.analysis.timing.ui.callgraph.callgraphanalysis"
             name="%callgraph.analysis">
          <tracetype
                applies="true"
@@ -16,14 +16,14 @@
       </module>
       <output
             class="org.eclipse.tracecompass.tmf.ui.analysis.TmfAnalysisViewOutput"
-            id="org.eclipse.tracecompass.internal.analysis.timing.ui.callgraph.callgraphDensity">
+            id="org.eclipse.tracecompass.extension.internal.callstack.ui.callgraph.callgraphDensity">
          <analysisModuleClass
                class="org.eclipse.tracecompass.extension.internal.callstack.ui.callgraph.CallGraphAnalysisUI">
          </analysisModuleClass>
       </output>
       <output
             class="org.eclipse.tracecompass.tmf.ui.analysis.TmfAnalysisViewOutput"
-            id="org.eclipse.tracecompass.internal.analysis.timing.ui.flamegraph.flamegraphView">
+            id="org.eclipse.tracecompass.extension.internal.callstack.ui.flamegraph.flamegraphView">
          <analysisModuleClass
                class="org.eclipse.tracecompass.extension.internal.callstack.ui.callgraph.CallGraphAnalysisUI">
          </analysisModuleClass>
@@ -39,7 +39,7 @@
             category="org.eclipse.linuxtools.tmf.ui.views.category"
             class="org.eclipse.tracecompass.extension.internal.callstack.ui.callgraph.CallGraphDensityView"
             icon="icons/elcl16/funcdensity.png"
-            id="org.eclipse.tracecompass.internal.analysis.timing.ui.callgraph.callgraphDensity"
+            id="org.eclipse.tracecompass.extension.internal.callstack.ui.callgraph.callgraphDensity"
             name="%view.callgraphDensity"
             restorable="true">
       </view>
@@ -47,7 +47,7 @@
             category="org.eclipse.linuxtools.tmf.ui.views.category"
             class="org.eclipse.tracecompass.extension.internal.callstack.ui.flamegraph.FlameGraphView"
             icon="icons/elcl16/flame.png"
-            id="org.eclipse.tracecompass.internal.analysis.timing.ui.flamegraph.flamegraphView"
+            id="org.eclipse.tracecompass.extension.internal.callstack.ui.flamegraph.flamegraphView"
             name="%view.flameGraph"
             restorable="true">
       </view>
@@ -56,7 +56,7 @@
             allowMultiple="true"
             class="org.eclipse.tracecompass.extension.internal.callstack.ui.views.callstack.CallStackView"
             icon="icons/obj16/stckframe_obj.gif"
-            id="org.eclipse.tracecompass.internal.analysis.timing.ui.views.callstack"
+            id="org.eclipse.tracecompass.extension.internal.analysis.timing.ui.views.callstack"
             name="%view.callstack"
             restorable="true">
       </view>

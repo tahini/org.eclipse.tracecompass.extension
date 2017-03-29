@@ -25,7 +25,7 @@ public class CallGraphAnalysisUI extends CallGraphAnalysis {
     /**
      * ID
      */
-    public static final @NonNull String ID = "org.eclipse.tracecompass.internal.analysis.timing.ui.callgraph.callgraphanalysis"; //$NON-NLS-1$
+    public static final @NonNull String ID = "org.eclipse.tracecompass.extension.internal.analysis.timing.ui.callgraph.callgraphanalysis"; //$NON-NLS-1$
 
     /**
      * Default constructor
