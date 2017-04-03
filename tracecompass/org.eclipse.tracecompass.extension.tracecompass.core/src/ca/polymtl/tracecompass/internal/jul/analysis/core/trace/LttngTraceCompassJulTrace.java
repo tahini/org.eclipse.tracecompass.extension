@@ -9,22 +9,23 @@
 
 package ca.polymtl.tracecompass.internal.jul.analysis.core.trace;
 
-import org.eclipse.tracecompass.lttng2.ust.core.trace.LttngUstTrace;
+import org.eclipse.tracecompass.tmf.ctf.core.trace.CtfTmfTrace;
 
 /**
  * @author Geneviève Bastien
  */
-public class LttngTraceCompassJulTrace extends LttngUstTrace {
+public class LttngTraceCompassJulTrace extends CtfTmfTrace {
 
     /**
      * Default constructor
      */
     public LttngTraceCompassJulTrace() {
         super(LttngTraceCompassJulEventFactory.instance());
+
     }
 
-    @Override
-    protected int getAverageEventSize() {
-        return 300;
-    }
+//    @Override
+//    protected int getAverageEventSize() {
+//        return 300;
+//    }
 }

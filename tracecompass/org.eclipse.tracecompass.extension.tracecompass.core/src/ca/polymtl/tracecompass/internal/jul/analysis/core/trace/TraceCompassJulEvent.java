@@ -12,11 +12,9 @@ package ca.polymtl.tracecompass.internal.jul.analysis.core.trace;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.Nullable;
-import org.eclipse.tracecompass.common.core.log.TraceCompassLogUtils;
 import org.eclipse.tracecompass.ctf.core.event.IEventDeclaration;
 import org.eclipse.tracecompass.ctf.core.event.IEventDefinition;
 import org.eclipse.tracecompass.tmf.core.event.ITmfEventField;
@@ -31,10 +29,6 @@ import org.json.JSONObject;
  * @author Geneviève Bastien
  */
 public class TraceCompassJulEvent extends CtfTmfEvent {
-
-    private static final Pattern EVENT_NAME_PATTERN = Pattern.compile("\\[(.*)\\].*"); //$NON-NLS-1$
-    private static final Pattern FIELDS_PATTERN = Pattern.compile("\\[.*\\]\\s(.*)"); //$NON-NLS-1$
-    private static final Pattern ONE_FIELD_PATTERN = Pattern.compile("([^,\\s]*)=([^,]*)[,\\s]*(.*)"); //$NON-NLS-1$
 
     /** Lazy-loaded field for the event name */
     private transient @Nullable String fEventName;
@@ -96,15 +90,15 @@ public class TraceCompassJulEvent extends CtfTmfEvent {
             baseContent.getFields().stream().forEach(t -> fields.add(t));
             try {
                 JSONObject root = new JSONObject(msg);
-                char phase = root.optString(TraceCompassLogUtils.PHASE, "I").charAt(0); //$NON-NLS-1$
-                Integer tid = root.optInt(TraceCompassLogUtils.TID, Integer.MIN_VALUE);
-                if (tid == Integer.MIN_VALUE) {
-                    tid = null;
-                }
+                char phase = root.optString("ph", "i").charAt(0); //$NON-NLS-1$
                 fields.add(new TmfEventField("phase", String.valueOf(phase), null)); //$NON-NLS-1$
                 fEventName = root.optString("name"); //$NON-NLS-1$
                 fields.add(new TmfEventField("evName", fEventName, null)); //$NON-NLS-1$
-                JSONObject args = root.optJSONObject(TraceCompassLogUtils.ARGS);
+                String ts = root.optString("ts");
+                if (ts != null) {
+                    fields.add(new TmfEventField("ts", ts, null));
+                }
+                JSONObject args = root.optJSONObject("args");
                 if (args != null) {
                     Iterator<?> keys = args.keys();
                     while (keys.hasNext()) {

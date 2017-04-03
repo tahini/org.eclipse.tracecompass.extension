@@ -10,5 +10,4 @@
             class="org.eclipse.tracecompass.extension.internal.callstack.xml.core.callstack.CallstackXmlSchemaParser">
       </schemaParser>
    </extension>
-
 </plugin>

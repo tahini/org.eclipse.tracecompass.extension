@@ -21,8 +21,6 @@ import org.eclipse.tracecompass.segmentstore.core.ISegment;
 import org.eclipse.tracecompass.segmentstore.core.ISegmentStore;
 import org.eclipse.tracecompass.tmf.core.event.ITmfEvent;
 import org.eclipse.tracecompass.tmf.core.event.ITmfEventField;
-import org.eclipse.tracecompass.tmf.core.timestamp.ITmfTimestamp;
-import org.eclipse.tracecompass.tmf.core.timestamp.TmfTimestamp;
 
 /**
  * @author Geneviève Bastien
@@ -39,6 +37,8 @@ public class LttngJulTimeAnalysis extends AbstractSegmentStoreAnalysisEventBased
     private long fNbWithin15 = 0;
     private long fNbWithin2 = 0;
     private long fNbOutliers = 0;
+    private long fPreviousLttngTimestamp = -1;
+    private long fPreviousTs = -1;
 
     @Override
     protected void canceling() {
@@ -64,17 +64,25 @@ public class LttngJulTimeAnalysis extends AbstractSegmentStoreAnalysisEventBased
         public void handleData(@NonNull ITmfEvent event) {
             super.handleData(event);
 
+            long prevLttngTs = fPreviousLttngTimestamp;
+            long prevTs = fPreviousTs;
             long lttngTs = event.getTimestamp().getValue();
             ITmfEventField field = event.getContent().getField("long_millis");
-            if (field == null) {
+            ITmfEventField tsfield = event.getContent().getField("ts");
+            if (field == null || tsfield == null) {
                 return;
             }
+            fPreviousLttngTimestamp = lttngTs;
+            String javaTsStr = (String) tsfield.getValue();
+            long javaTs = Long.valueOf(javaTsStr);
+            fPreviousTs = javaTs;
             fNbEvents++;
-            Long value = (Long) field.getValue();
-            ITmfTimestamp fromMillis = TmfTimestamp.fromMillis(value);
-            long javaTs = fromMillis.toNanos();
 
-            long abs = Math.abs(lttngTs - javaTs);
+            // Compare the differences between java ts and lttng
+            long lttngVar = lttngTs - prevLttngTs;
+            long javaVar = javaTs - prevTs;
+
+            long abs = Math.abs(lttngVar - javaVar);
 
             if (abs < 1000000) {
                 fNbSameMilli++;
@@ -88,7 +96,7 @@ public class LttngJulTimeAnalysis extends AbstractSegmentStoreAnalysisEventBased
             }
 
             fMaxDiff = Math.max(abs, fMaxDiff);
-            getSegmentStore().add(new BasicSegment(Math.min(lttngTs, javaTs), Math.max(javaTs, lttngTs)));
+            getSegmentStore().add(new BasicSegment(lttngTs, lttngTs + abs));
         }
     }
 

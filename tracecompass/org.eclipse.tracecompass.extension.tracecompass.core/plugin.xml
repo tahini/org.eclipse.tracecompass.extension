@@ -33,5 +33,16 @@
             file="xml_analyses/TraceCompassThreads.xml">
       </xmlfile>
    </extension>
+   <extension
+         point="org.eclipse.linuxtools.tmf.core.tracetype">
+      <type
+            category="org.eclipse.linuxtools.tmf.ctf.core.category.ctf"
+            event_type="org.eclipse.tracecompass.tmf.ctf.core.event.CtfTmfEvent"
+            id="org.eclipse.tracecompass.extension.tracecompass.core.jultrace"
+            isDirectory="false"
+            name="%trace.lttng.ustjul"
+            trace_type="ca.polymtl.tracecompass.internal.jul.analysis.core.trace.LttngTraceCompassJulTrace">
+      </type>
+   </extension>
    
 </plugin>

@@ -31,6 +31,13 @@
       <listener
             class="org.eclipse.tracecompass.extension.internal.callstack.ui.views.callstack.CallStackAnalysisListener">
       </listener>
+      <output
+            class="org.eclipse.tracecompass.tmf.ui.analysis.TmfAnalysisViewOutput"
+            id="org.eclipse.tracecompass.extension.internal.callstack.ui.stacktable">
+         <analysisModuleClass
+               class="org.eclipse.tracecompass.extension.internal.callstack.core.context.ContextCallStackAnalysis">
+         </analysisModuleClass>
+      </output>
    </extension>
    <extension
          point="org.eclipse.ui.views">
@@ -58,6 +65,13 @@
             icon="icons/obj16/stckframe_obj.gif"
             id="org.eclipse.tracecompass.extension.internal.analysis.timing.ui.views.callstack"
             name="%view.callstack"
+            restorable="true">
+      </view>
+      <view
+            category="org.eclipse.linuxtools.tmf.ui.views.category"
+            class="org.eclipse.tracecompass.extension.internal.callstack.ui.views.stacktable.CallStackTableView"
+            id="org.eclipse.tracecompass.extension.internal.callstack.ui.stacktable"
+            name="Stack Table"
             restorable="true">
       </view>
    </extension>

@@ -62,7 +62,7 @@
          point="org.eclipse.linuxtools.tmf.ui.tracetypeui">
       <type
             icon="icons/obj16/tc_jul.png"
-            tracetype="ca.polymtl.tracecompass.lttng.jul.trace">
+            tracetype="org.eclipse.tracecompass.extension.tracecompass.core.jultrace">
       </type>
    </extension>
    
