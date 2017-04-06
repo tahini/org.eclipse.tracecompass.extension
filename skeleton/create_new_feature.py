@@ -21,6 +21,8 @@ args = parser.parse_args()
 idPlaceholder = "{%skeleton}"
 namePlaceholder = "{%skeletonName}"
 
+baseDir = os.path.dirname(os.path.realpath(__file__))
+
 def copyAndUpdate(srcDir, destDir, name, id):
     shutil.copytree(srcDir, destDir)
     for dname, dirs, files in os.walk(destDir):
@@ -40,17 +42,17 @@ def copyDirs(fullname, dir, noUi):
     id = fullname.lower().replace(' ', '.')
     moveTo = dir + '/org.eclipse.tracecompass.extension.' + id
     print('Copying skeleton directories to ' + moveTo + '[.*]')
-    copyAndUpdate('skeleton.feature', moveTo, fullname, id)
-    copyAndUpdate('skeleton.core', moveTo + '.core', fullname, id)
+    copyAndUpdate(baseDir + '/skeleton.feature', moveTo, fullname, id)
+    copyAndUpdate(baseDir + '/skeleton.core', moveTo + '.core', fullname, id)
     # Move the Activator of the core
     os.makedirs(moveTo + '.core/src/org/eclipse/tracecompass/extension/internal/' + id.replace('.', '/') + '/core')
     shutil.move(moveTo + '.core/src/Activator.java', moveTo + '.core/src/org/eclipse/tracecompass/extension/internal/' + id.replace('.', '/') + '/core')
     shutil.move(moveTo + '.core/src/package-info.java', moveTo + '.core/src/org/eclipse/tracecompass/extension/internal/' + id.replace('.', '/') + '/core')
 
-    copyAndUpdate('skeleton.core.tests', moveTo + '.core.tests', fullname, id)
+    copyAndUpdate(baseDir + '/skeleton.core.tests', moveTo + '.core.tests', fullname, id)
 
     if not(noUi):
-        copyAndUpdate('skeleton.ui', moveTo + '.ui', fullname, id)
+        copyAndUpdate(baseDir + '/skeleton.ui', moveTo + '.ui', fullname, id)
         # Move the Activator of the ui
         os.makedirs(moveTo + '.ui/src/org/eclipse/tracecompass/extension/internal/' + id.replace('.', '/') + '/ui')
         shutil.move(moveTo + '.ui/src/Activator.java', moveTo + '.ui/src/org/eclipse/tracecompass/extension/internal/' + id.replace('.', '/') + '/ui')

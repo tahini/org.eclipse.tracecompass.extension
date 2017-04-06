@@ -1,5 +1,6 @@
-package org.eclipse.tracecompass.extension.internal.{%skeleton}.ui;
+package org.eclipse.tracecompass.extension.internal.virtual.machine.analysis.ui;
 
+import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
@@ -8,11 +9,11 @@ import org.osgi.framework.BundleContext;
  */
 public class Activator extends AbstractUIPlugin {
 
-	// The plug-in ID
-	public static final String PLUGIN_ID = "org.eclipse.tracecompass.extension.{%skeleton}.ui";
+	/** The plugin ID */
+	public static final String PLUGIN_ID = "org.eclipse.tracecompass.extension.{%skeleton}.ui"; //$NON-NLS-1$
 
 	// The shared instance
-	private static Activator plugin;
+	private static @Nullable Activator plugin;
 
 	/**
 	 * The constructor
@@ -25,7 +26,7 @@ public class Activator extends AbstractUIPlugin {
 	 * @see org.eclipse.ui.plugin.AbstractUIPlugin#start(org.osgi.framework.BundleContext)
 	 */
 	@Override
-    public void start(BundleContext context) throws Exception {
+    public void start(@Nullable BundleContext context) throws Exception {
 		super.start(context);
 		plugin = this;
 	}
@@ -35,7 +36,7 @@ public class Activator extends AbstractUIPlugin {
 	 * @see org.eclipse.ui.plugin.AbstractUIPlugin#stop(org.osgi.framework.BundleContext)
 	 */
 	@Override
-    public void stop(BundleContext context) throws Exception {
+    public void stop(@Nullable BundleContext context) throws Exception {
 		plugin = null;
 		super.stop(context);
 	}
@@ -45,8 +46,9 @@ public class Activator extends AbstractUIPlugin {
 	 *
 	 * @return the shared instance
 	 */
-	public static Activator getDefault() {
+	public static @Nullable Activator getDefault() {
 		return plugin;
 	}
 
 }
+
