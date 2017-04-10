@@ -7,7 +7,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
 
-package org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph;
+package org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.instrumented;
 
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackElement;

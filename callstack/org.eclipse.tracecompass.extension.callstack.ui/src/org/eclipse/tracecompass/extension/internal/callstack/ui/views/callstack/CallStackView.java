@@ -47,7 +47,7 @@ import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph.ICalledFunction;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.instrumented.ICalledFunction;
 import org.eclipse.tracecompass.extension.internal.callstack.ui.Activator;
 import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.CallStack;
 import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.CallStackSeries;

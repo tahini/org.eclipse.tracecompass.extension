@@ -16,8 +16,8 @@ import java.util.function.Consumer;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.annotation.Nullable;
-import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph.CalledFunctionFactory;
-import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph.ICalledFunction;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.instrumented.CalledFunctionFactory;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.instrumented.ICalledFunction;
 import org.eclipse.tracecompass.extension.internal.provisional.analysis.core.model.IHostModel;
 import org.eclipse.tracecompass.extension.internal.provisional.analysis.core.model.ModelManager;
 import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.CallStackSeries.IThreadIdProvider;

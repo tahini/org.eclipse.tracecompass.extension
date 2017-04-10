@@ -8,8 +8,8 @@ import java.util.List;
 
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.tracecompass.extension.callstack.timing.core.tests.stubs.CallGraphAnalysisStub;
-import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph.AggregatedCalledFunction;
-import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph.AggregatedCalledFunctionStatistics;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.instrumented.AggregatedCalledFunction;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.instrumented.AggregatedCalledFunctionStatistics;
 import org.eclipse.tracecompass.statesystem.core.ITmfStateSystemBuilder;
 import org.eclipse.tracecompass.statesystem.core.StateSystemFactory;
 import org.eclipse.tracecompass.statesystem.core.backend.IStateHistoryBackend;

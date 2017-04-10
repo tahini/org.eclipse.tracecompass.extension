@@ -18,10 +18,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import org.eclipse.jdt.annotation.NonNull;
-import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph.CalledFunction;
-import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph.CalledFunctionFactory;
-import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph.CalledStringFunction;
-import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph.ICalledFunction;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.instrumented.CalledFunction;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.instrumented.CalledFunctionFactory;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.instrumented.CalledStringFunction;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.instrumented.ICalledFunction;
 import org.eclipse.tracecompass.extension.internal.provisional.analysis.core.model.IHostModel;
 import org.eclipse.tracecompass.extension.internal.provisional.analysis.core.model.ModelManager;
 import org.eclipse.tracecompass.statesystem.core.statevalue.TmfStateValue;

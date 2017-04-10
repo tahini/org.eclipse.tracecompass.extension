@@ -9,8 +9,7 @@
 
 package org.eclipse.tracecompass.extension.internal.callstack.ui.flamegraph;
 
-import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph.AggregatedCalledFunction;
-import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph.AggregatedCalledFunctionStatistics;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.AggregatedCallSite;
 import org.eclipse.tracecompass.tmf.ui.widgets.timegraph.model.ITimeGraphEntry;
 import org.eclipse.tracecompass.tmf.ui.widgets.timegraph.model.TimeEvent;
 
@@ -26,10 +25,10 @@ public class FlamegraphEvent extends TimeEvent {
     private static final int MODULO = FlameGraphPresentationProvider.NUM_COLORS / 2;
 
     private final Object fSymbol;
-    private final long fSelfTime;
-    private final int fProcessId;
-    private final AggregatedCalledFunctionStatistics fStatistics;
-    private final long fCpuTime;
+//    private final long fSelfTime;
+//    private final int fProcessId;
+//    private final AggregatedCalledFunctionStatistics fStatistics;
+//    private final long fCpuTime;
 
     /**
      * Constructor
@@ -41,13 +40,13 @@ public class FlamegraphEvent extends TimeEvent {
      * @param aggregatedFunction
      *            The function the event's presenting
      */
-    public FlamegraphEvent(ITimeGraphEntry source, long beginTime, AggregatedCalledFunction aggregatedFunction) {
-        super(source, beginTime, aggregatedFunction.getDuration(), String.valueOf(aggregatedFunction.getSymbol()).hashCode() % MODULO + MODULO);
+    public FlamegraphEvent(ITimeGraphEntry source, long beginTime, AggregatedCallSite aggregatedFunction) {
+        super(source, beginTime, aggregatedFunction.getLength(), String.valueOf(aggregatedFunction.getSymbol()).hashCode() % MODULO + MODULO);
         fSymbol = aggregatedFunction.getSymbol();
-        fStatistics = aggregatedFunction.getFunctionStatistics();
-        fProcessId = aggregatedFunction.getProcessId();
-        fSelfTime = aggregatedFunction.getSelfTime();
-        fCpuTime = aggregatedFunction.getCpuTime();
+//        fStatistics = aggregatedFunction.getFunctionStatistics();
+//        fProcessId = aggregatedFunction.getProcessId();
+//        fSelfTime = aggregatedFunction.getSelfTime();
+//        fCpuTime = aggregatedFunction.getCpuTime();
     }
 
     /**
@@ -59,39 +58,39 @@ public class FlamegraphEvent extends TimeEvent {
         return fSymbol;
     }
 
-    /**
-     * The event's statistics
-     *
-     * @return The event's statistics
-     */
-    public AggregatedCalledFunctionStatistics getStatistics() {
-        return fStatistics;
-    }
-
-    /**
-     * The self time of an event
-     *
-     * @return The self time
-     */
-    public long getSelfTime() {
-        return fSelfTime;
-    }
-
-    /**
-     * The CPU time of an event
-     *
-     * @return The self time
-     */
-    public long getCpuTime() {
-        return fCpuTime;
-    }
-
-    /**
-     * The process ID of the traced application
-     *
-     * @return process id
-     */
-    public int getProcessId() {
-        return fProcessId;
-    }
+//    /**
+//     * The event's statistics
+//     *
+//     * @return The event's statistics
+//     */
+//    public AggregatedCalledFunctionStatistics getStatistics() {
+//        return fStatistics;
+//    }
+//
+//    /**
+//     * The self time of an event
+//     *
+//     * @return The self time
+//     */
+//    public long getSelfTime() {
+//        return fSelfTime;
+//    }
+//
+//    /**
+//     * The CPU time of an event
+//     *
+//     * @return The self time
+//     */
+//    public long getCpuTime() {
+//        return fCpuTime;
+//    }
+//
+//    /**
+//     * The process ID of the traced application
+//     *
+//     * @return process id
+//     */
+//    public int getProcessId() {
+//        return fProcessId;
+//    }
 }

@@ -31,6 +31,9 @@
     <module>org.eclipse.tracecompass.extension.callstack.core.tests</module>
     <module>org.eclipse.tracecompass.extension.callstack.ui</module>
     <module>org.eclipse.tracecompass.extension.callstack</module>
+    <module>org.eclipse.tracecompass.extension.perf.profiling.core</module>
+    <module>org.eclipse.tracecompass.extension.perf.profiling.core.tests</module>
+    <module>org.eclipse.tracecompass.extension.perf.profiling</module>
   </modules>
 
 </project>

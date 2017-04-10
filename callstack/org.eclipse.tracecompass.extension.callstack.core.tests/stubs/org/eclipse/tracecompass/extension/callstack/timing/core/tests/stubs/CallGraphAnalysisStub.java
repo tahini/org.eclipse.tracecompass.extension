@@ -17,7 +17,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
-import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph.CallGraphAnalysis;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.instrumented.CallGraphAnalysis;
 import org.eclipse.tracecompass.extension.internal.provisional.analysis.core.model.ModelManager;
 import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.CallStackSeries;
 import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackProvider;

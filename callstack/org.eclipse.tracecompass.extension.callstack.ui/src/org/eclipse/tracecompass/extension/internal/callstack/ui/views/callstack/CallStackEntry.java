@@ -17,7 +17,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.Nullable;
-import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph.ICalledFunction;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.instrumented.ICalledFunction;
 import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.CallStack;
 import org.eclipse.tracecompass.tmf.ui.symbols.ISymbolProvider;
 import org.eclipse.tracecompass.tmf.ui.widgets.timegraph.model.ITimeEvent;

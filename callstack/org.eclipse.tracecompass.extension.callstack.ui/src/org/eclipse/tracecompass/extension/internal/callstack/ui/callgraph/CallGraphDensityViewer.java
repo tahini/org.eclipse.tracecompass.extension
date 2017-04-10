@@ -14,7 +14,7 @@ import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.tracecompass.analysis.timing.core.segmentstore.ISegmentStoreProvider;
 import org.eclipse.tracecompass.analysis.timing.ui.views.segmentstore.density.AbstractSegmentStoreDensityViewer;
-import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph.CallGraphAnalysis;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.instrumented.CallGraphAnalysis;
 import org.eclipse.tracecompass.tmf.core.trace.ITmfTrace;
 import org.eclipse.tracecompass.tmf.core.trace.TmfTraceUtils;
 

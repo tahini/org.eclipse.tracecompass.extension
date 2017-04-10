@@ -12,7 +12,7 @@ package org.eclipse.tracecompass.extension.internal.callstack.ui.callgraph;
 import java.util.Collections;
 
 import org.eclipse.jdt.annotation.NonNull;
-import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph.CallGraphAnalysis;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.instrumented.CallGraphAnalysis;
 import org.eclipse.tracecompass.tmf.core.segment.ISegmentAspect;
 
 /**

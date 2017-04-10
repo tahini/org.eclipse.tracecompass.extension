@@ -11,7 +11,13 @@
  *******************************************************************************/
 package org.eclipse.tracecompass.extension.internal.callstack.ui.flamegraph;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -19,7 +25,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.annotation.NonNull;
-import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.ActionContributionItem;
 import org.eclipse.jface.action.GroupMarker;
@@ -30,6 +35,7 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ISelection;
@@ -43,26 +49,31 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
-import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph.CallGraphAnalysis;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.GroupNode;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.ICallGraphProvider;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.instrumented.CallGraphAnalysis;
 import org.eclipse.tracecompass.extension.internal.callstack.ui.Activator;
-import org.eclipse.tracecompass.extension.internal.callstack.ui.callgraph.CallGraphAnalysisUI;
 import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.CallStackSeries;
 import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackGroupDescriptor;
-import org.eclipse.tracecompass.segmentstore.core.ISegment;
-import org.eclipse.tracecompass.tmf.core.signal.TmfSelectionRangeUpdatedSignal;
+import org.eclipse.tracecompass.tmf.core.analysis.IAnalysisModule;
 import org.eclipse.tracecompass.tmf.core.signal.TmfSignalHandler;
 import org.eclipse.tracecompass.tmf.core.signal.TmfSignalManager;
 import org.eclipse.tracecompass.tmf.core.signal.TmfTraceClosedSignal;
 import org.eclipse.tracecompass.tmf.core.signal.TmfTraceSelectedSignal;
-import org.eclipse.tracecompass.tmf.core.timestamp.TmfTimestamp;
 import org.eclipse.tracecompass.tmf.core.trace.ITmfTrace;
+import org.eclipse.tracecompass.tmf.core.trace.TmfTraceManager;
 import org.eclipse.tracecompass.tmf.core.trace.TmfTraceUtils;
 import org.eclipse.tracecompass.tmf.ui.editors.ITmfTraceEditor;
+import org.eclipse.tracecompass.tmf.ui.symbols.ISymbolProvider;
+import org.eclipse.tracecompass.tmf.ui.symbols.ISymbolProviderPreferencePage;
+import org.eclipse.tracecompass.tmf.ui.symbols.SymbolProviderConfigDialog;
+import org.eclipse.tracecompass.tmf.ui.symbols.SymbolProviderManager;
 import org.eclipse.tracecompass.tmf.ui.symbols.TmfSymbolProviderUpdatedSignal;
 import org.eclipse.tracecompass.tmf.ui.views.TmfView;
 import org.eclipse.tracecompass.tmf.ui.widgets.timegraph.TimeGraphPresentationProvider;
 import org.eclipse.tracecompass.tmf.ui.widgets.timegraph.TimeGraphViewer;
 import org.eclipse.tracecompass.tmf.ui.widgets.timegraph.widgets.TimeGraphControl;
+import org.eclipse.tracecompass.tmf.ui.widgets.timegraph.widgets.Utils.TimeFormat;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbenchActionConstants;
@@ -81,6 +92,8 @@ public class FlameGraphView extends TmfView {
      *
      */
     public static final String ID = FlameGraphView.class.getPackage().getName() + ".flamegraphView"; //$NON-NLS-1$
+
+    private static final String SYMBOL_MAPPING_ICON_PATH = "icons/obj16/binaries_obj.gif"; //$NON-NLS-1$
 
     private static final String SORT_OPTION_KEY = "sort.option"; //$NON-NLS-1$
     private static final ImageDescriptor SORT_BY_NAME_ICON = Activator.getDefault().getImageDescripterFromPath("icons/etool16/sort_alpha.gif"); //$NON-NLS-1$
@@ -101,6 +114,10 @@ public class FlameGraphView extends TmfView {
     private Action fAggregateByAction;
     private Action fSortByNameAction;
     private Action fSortByIdAction;
+ // The action to import a binary file mapping */
+    private Action fConfigureSymbolsAction;
+
+    private final Map<ITmfTrace, ISymbolProvider> fSymbolProviders = new HashMap<>();
     /**
      * A plain old semaphore is used since different threads will be competing
      * for the same resource.
@@ -122,6 +139,7 @@ public class FlameGraphView extends TmfView {
         fPresentationProvider = new FlameGraphPresentationProvider();
         fTimeGraphViewer.setTimeGraphContentProvider(fTimeGraphContentProvider);
         fTimeGraphViewer.setTimeGraphProvider(fPresentationProvider);
+        fTimeGraphViewer.setTimeFormat(TimeFormat.NUMBER);
         IEditorPart editor = getSite().getPage().getActiveEditor();
         if (editor instanceof ITmfTraceEditor) {
             ITmfTrace trace = ((ITmfTraceEditor) editor).getTrace();
@@ -173,19 +191,16 @@ public class FlameGraphView extends TmfView {
     @TmfSignalHandler
     public void traceSelected(final TmfTraceSelectedSignal signal) {
         fTrace = signal.getTrace();
-        CallGraphAnalysis module = getCallgraphModule();
-        if (module != null) {
-            buildFlameGraph(module);
-        }
+        buildFlameGraph(getCallgraphModules());
     }
 
-    private @Nullable CallGraphAnalysis getCallgraphModule() {
+    private Iterable<ICallGraphProvider> getCallgraphModules() {
         ITmfTrace trace = fTrace;
         if (trace == null) {
             return null;
         }
-        CallGraphAnalysis module = TmfTraceUtils.getAnalysisModuleOfClass(trace, CallGraphAnalysis.class, CallGraphAnalysisUI.ID);
-        return module;
+        Iterable<ICallGraphProvider> modules = TmfTraceUtils.getAnalysisModulesOfClass(trace, ICallGraphProvider.class);
+        return modules;
     }
 
     /**
@@ -195,7 +210,7 @@ public class FlameGraphView extends TmfView {
      *            the callGraphAnalysis
      */
     @VisibleForTesting
-    public void buildFlameGraph(CallGraphAnalysis callGraphAnalysis) {
+    public void buildFlameGraph(Iterable<ICallGraphProvider> callGraphAnalysis) {
         /*
          * Note for synchronization:
          *
@@ -215,13 +230,32 @@ public class FlameGraphView extends TmfView {
             Activator.getDefault().logError(e.getMessage(), e);
             fLock.release();
         }
-        if (callGraphAnalysis == null) {
+        /*
+         * Load the symbol provider for the current trace, even if it does not
+         * provide a call stack analysis module. See
+         * https://bugs.eclipse.org/bugs/show_bug.cgi?id=494212
+         */
+        ITmfTrace trace = fTrace;
+        if (trace != null) {
+            ISymbolProvider symbolProvider = fSymbolProviders.get(trace);
+            if (symbolProvider == null) {
+                symbolProvider = SymbolProviderManager.getInstance().getSymbolProvider(trace);
+                symbolProvider.loadConfiguration(null);
+                fSymbolProviders.put(trace, symbolProvider);
+            }
+        }
+
+        if (!callGraphAnalysis.iterator().hasNext())  {
             fTimeGraphViewer.setInput(null);
             fLock.release();
             return;
         }
-        fTimeGraphViewer.setInput(callGraphAnalysis.getSegmentStore());
-        callGraphAnalysis.schedule();
+        for (ICallGraphProvider provider : callGraphAnalysis) {
+            if (provider instanceof IAnalysisModule) {
+                ((IAnalysisModule) provider).schedule();
+            }
+        }
+
         Job j = new Job(Messages.CallGraphAnalysis_Execution) {
 
             @Override
@@ -230,9 +264,17 @@ public class FlameGraphView extends TmfView {
                     fLock.release();
                     return Status.CANCEL_STATUS;
                 }
-                callGraphAnalysis.waitForCompletion(monitor);
+                for (ICallGraphProvider provider : callGraphAnalysis) {
+                    if (provider instanceof IAnalysisModule) {
+                        ((IAnalysisModule) provider).waitForCompletion(monitor);
+                    }
+                }
+                List<GroupNode> groupNodes = new ArrayList<>();
+                for (ICallGraphProvider provider : callGraphAnalysis) {
+                    groupNodes.addAll(provider.getGroups());
+                }
                 Display.getDefault().asyncExec(() -> {
-                    fTimeGraphViewer.setInput(callGraphAnalysis.getGroupNodes());
+                    fTimeGraphViewer.setInput(groupNodes);
                     fTimeGraphViewer.resetStartFinishTime();
                     fLock.release();
                 });
@@ -331,30 +373,30 @@ public class FlameGraphView extends TmfView {
         if (selection instanceof IStructuredSelection) {
             for (Object object : ((IStructuredSelection) selection).toList()) {
                 if (object instanceof FlamegraphEvent) {
-                    final FlamegraphEvent flamegraphEvent = (FlamegraphEvent) object;
-                    menuManager.add(new Action(Messages.FlameGraphView_GotoMaxDuration) {
-                        @Override
-                        public void run() {
-                            ISegment maxSeg = flamegraphEvent.getStatistics().getDurationStatistics().getMaxObject();
-                            if (maxSeg == null) {
-                                return;
-                            }
-                            TmfSelectionRangeUpdatedSignal sig = new TmfSelectionRangeUpdatedSignal(this, TmfTimestamp.fromNanos(maxSeg.getStart()), TmfTimestamp.fromNanos(maxSeg.getEnd()));
-                            broadcast(sig);
-                        }
-                    });
-
-                    menuManager.add(new Action(Messages.FlameGraphView_GotoMinDuration) {
-                        @Override
-                        public void run() {
-                            ISegment minSeg = flamegraphEvent.getStatistics().getDurationStatistics().getMinObject();
-                            if (minSeg == null) {
-                                return;
-                            }
-                            TmfSelectionRangeUpdatedSignal sig = new TmfSelectionRangeUpdatedSignal(this, TmfTimestamp.fromNanos(minSeg.getStart()), TmfTimestamp.fromNanos(minSeg.getEnd()));
-                            broadcast(sig);
-                        }
-                    });
+//                    final FlamegraphEvent flamegraphEvent = (FlamegraphEvent) object;
+//                    menuManager.add(new Action(Messages.FlameGraphView_GotoMaxDuration) {
+//                        @Override
+//                        public void run() {
+//                            ISegment maxSeg = flamegraphEvent.getStatistics().getDurationStatistics().getMaxObject();
+//                            if (maxSeg == null) {
+//                                return;
+//                            }
+//                            TmfSelectionRangeUpdatedSignal sig = new TmfSelectionRangeUpdatedSignal(this, TmfTimestamp.fromNanos(maxSeg.getStart()), TmfTimestamp.fromNanos(maxSeg.getEnd()));
+//                            broadcast(sig);
+//                        }
+//                    });
+//
+//                    menuManager.add(new Action(Messages.FlameGraphView_GotoMinDuration) {
+//                        @Override
+//                        public void run() {
+//                            ISegment minSeg = flamegraphEvent.getStatistics().getDurationStatistics().getMinObject();
+//                            if (minSeg == null) {
+//                                return;
+//                            }
+//                            TmfSelectionRangeUpdatedSignal sig = new TmfSelectionRangeUpdatedSignal(this, TmfTimestamp.fromNanos(minSeg.getStart()), TmfTimestamp.fromNanos(minSeg.getEnd()));
+//                            broadcast(sig);
+//                        }
+//                    });
                 }
             }
         }
@@ -366,6 +408,7 @@ public class FlameGraphView extends TmfView {
     }
 
     private void fillLocalToolBar(IToolBarManager manager) {
+        manager.add(getConfigureSymbolsAction());
         manager.add(getAggregateByAction());
         manager.add(getSortByNameAction());
         manager.add(getSortByIdAction());
@@ -403,10 +446,16 @@ public class FlameGraphView extends TmfView {
                         menu.dispose();
                     }
                     menu = new Menu(parent);
-                    CallGraphAnalysis callgraphModule = getCallgraphModule();
-                    if (callgraphModule == null) {
+                    Iterable<ICallGraphProvider> callgraphModules = getCallgraphModules();
+                    Iterator<ICallGraphProvider> iterator = callgraphModules.iterator();
+                    if (!iterator.hasNext()) {
                         return menu;
                     }
+                    ICallGraphProvider provider = iterator.next();
+                    if (!(provider instanceof CallGraphAnalysis)) {
+                        return menu;
+                    }
+                    CallGraphAnalysis callgraphModule = (CallGraphAnalysis) provider;
                     Collection<@NonNull CallStackSeries> series = callgraphModule.getSeries();
                     series.forEach(s -> {
                         ICallStackGroupDescriptor group = s.getAllGroup();
@@ -436,7 +485,7 @@ public class FlameGraphView extends TmfView {
             @Override
             public void run() {
                 callgraphModule.setGroupBy(descriptor);
-                buildFlameGraph(callgraphModule);
+                buildFlameGraph(Collections.singleton(callgraphModule));
             }
         };
         return groupAction;
@@ -478,6 +527,56 @@ public class FlameGraphView extends TmfView {
             fSortByIdAction.setImageDescriptor(SORT_BY_ID_ICON);
         }
         return fSortByIdAction;
+    }
+
+    private Action getConfigureSymbolsAction() {
+        if (fConfigureSymbolsAction != null) {
+            return fConfigureSymbolsAction;
+        }
+
+        fConfigureSymbolsAction = new Action("get symbols") {
+            @Override
+            public void run() {
+                SymbolProviderConfigDialog dialog = new SymbolProviderConfigDialog(getSite().getShell(), getProviderPages());
+                if (dialog.open() == IDialogConstants.OK_ID) {
+//                    fPresentationProvider.resetFunctionNames();
+//                    refresh();
+                }
+            }
+        };
+
+        fConfigureSymbolsAction.setToolTipText("get symbols");
+        fConfigureSymbolsAction.setImageDescriptor(Activator.getDefault().getImageDescripterFromPath(SYMBOL_MAPPING_ICON_PATH));
+
+        /*
+         * The updateConfigureSymbolsAction() method (called by refresh()) will
+         * set the action to true if applicable after the symbol provider has
+         * been properly loaded.
+         */
+        fConfigureSymbolsAction.setEnabled(true);
+
+        return fConfigureSymbolsAction;
+    }
+
+    /**
+     * @return an array of {@link ISymbolProviderPreferencePage} that will
+     *         configure the current traces
+     */
+    private ISymbolProviderPreferencePage[] getProviderPages() {
+        List<ISymbolProviderPreferencePage> pages = new ArrayList<>();
+        ITmfTrace trace = fTrace;
+        if (trace != null) {
+            for (ITmfTrace subTrace : TmfTraceManager.getTraceSet(trace)) {
+                ISymbolProvider provider = fSymbolProviders.get(subTrace);
+                if (provider != null) {
+                    ISymbolProviderPreferencePage page = provider.createPreferencePage();
+                    if (page != null) {
+                        pages.add(page);
+                    }
+                }
+            }
+        }
+        return pages.toArray(new ISymbolProviderPreferencePage[pages.size()]);
     }
 
     private void setSortOption(SortOption sortOption) {
@@ -537,9 +636,9 @@ public class FlameGraphView extends TmfView {
      */
     @TmfSignalHandler
     public void symbolMapUpdated(TmfSymbolProviderUpdatedSignal signal) {
-        if (signal.getSource() != this) {
+//        if (signal.getSource() != this) {
             fTimeGraphViewer.refresh();
-        }
+//        }
     }
 
 }

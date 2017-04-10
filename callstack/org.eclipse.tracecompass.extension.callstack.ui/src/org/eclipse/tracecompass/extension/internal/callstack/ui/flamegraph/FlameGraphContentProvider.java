@@ -21,9 +21,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph.AggregatedCalledFunction;
-import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph.GroupNode;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.AggregatedCallSite;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.GroupNode;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.LeafGroupNode;
 import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackElement;
 import org.eclipse.tracecompass.tmf.ui.widgets.timegraph.ITimeGraphContentProvider;
 import org.eclipse.tracecompass.tmf.ui.widgets.timegraph.model.ITimeGraphEntry;
@@ -55,19 +57,19 @@ public class FlameGraphContentProvider implements ITimeGraphContentProvider {
      * @param timestampStack
      *            A stack used to save the functions timeStamps
      */
-    private void setData(AggregatedCalledFunction firstNode, List<FlamegraphDepthEntry> childrenEntries, Deque<Long> timestampStack) {
+    private void setData(AggregatedCallSite firstNode, List<FlamegraphDepthEntry> childrenEntries, Deque<Long> timestampStack) {
         long lastEnd = timestampStack.peek();
-        for (int i = 0; i < firstNode.getMaxDepth(); i++) {
+        for (int i = 0; i <= firstNode.getMaxDepth(); i++) {
             if (i >= childrenEntries.size()) {
-                FlamegraphDepthEntry entry = new FlamegraphDepthEntry(String.valueOf(i), 0, firstNode.getDuration(), i, String.valueOf(i));
+                FlamegraphDepthEntry entry = new FlamegraphDepthEntry(String.valueOf(i), 0, firstNode.getLength(), i, String.valueOf(i));
                 childrenEntries.add(entry);
             }
-            childrenEntries.get(i).updateEndTime(lastEnd + firstNode.getDuration());
+            childrenEntries.get(i).updateEndTime(lastEnd + firstNode.getLength());
         }
         FlamegraphDepthEntry firstEntry = checkNotNull(childrenEntries.get(0));
         firstEntry.addEvent(new FlamegraphEvent(firstEntry, lastEnd, firstNode));
         // Build the event list for next entries (next depth)
-        addEvent(firstNode, childrenEntries, timestampStack);
+        addEvent(firstNode, childrenEntries, timestampStack, 1);
         timestampStack.pop();
     }
 
@@ -85,22 +87,21 @@ public class FlameGraphContentProvider implements ITimeGraphContentProvider {
      * @param timestampStack
      *            A stack used to save the functions timeStamps
      */
-    private void addEvent(AggregatedCalledFunction node, List<FlamegraphDepthEntry> childrenEntries, Deque<Long> timestampStack) {
-        if (node.hasChildren()) {
-            node.getChildren().stream()
-                    .sorted(Comparator.comparingLong(AggregatedCalledFunction::getDuration))
-                    .forEach(child -> {
-                        addEvent(child, childrenEntries, timestampStack);
-                    });
-            node.getChildren().stream().forEach(child -> {
-                timestampStack.pop();
-            });
-        }
-        FlamegraphDepthEntry entry = checkNotNull(childrenEntries.get(node.getDepth() - 1));
+    private void addEvent(AggregatedCallSite node, List<FlamegraphDepthEntry> childrenEntries, Deque<Long> timestampStack, int depth) {
+        node.getChildren().values().stream()
+                .sorted(Comparator.comparingLong(AggregatedCallSite::getLength))
+                .forEach(child -> {
+                    addEvent(child, childrenEntries, timestampStack, depth + 1);
+                });
+        node.getChildren().values().stream().forEach(child -> {
+            timestampStack.pop();
+        });
+
+        FlamegraphDepthEntry entry = checkNotNull(childrenEntries.get(depth));
         // Create the event corresponding to the function using the caller's
         // timestamp
         entry.addEvent(new FlamegraphEvent(entry, timestampStack.peek(), node));
-        timestampStack.push(timestampStack.peek() + node.getDuration());
+        timestampStack.push(timestampStack.peek() + node.getLength());
     }
 
     @Override
@@ -116,8 +117,8 @@ public class FlameGraphContentProvider implements ITimeGraphContentProvider {
         if (inputElement instanceof Collection<?>) {
             Collection<?> threadNodes = (Collection<?>) inputElement;
             for (Object object : threadNodes) {
-                if (object instanceof AggregatedCalledFunction) {
-                    buildChildrenEntries((AggregatedCalledFunction) object);
+                if (object instanceof GroupNode) {
+                    buildChildrenEntries((GroupNode) object, null);
                 }
             }
         } else {
@@ -135,52 +136,49 @@ public class FlameGraphContentProvider implements ITimeGraphContentProvider {
      * @param groupNode
      *            The node of the aggregation tree
      */
-    private void buildChildrenEntries(AggregatedCalledFunction groupNode) {
-        //long endTime = fActiveTrace.getStartTime().toNanos() - fActiveTrace.getEndTime().toNanos();
-        TimeGraphEntry threadEntry = new TimeGraphEntry(groupNode.getSymbol().toString(), 0L, 0L);
-        // Create the hierarchy for this group element
-        ICallStackElement parentElement = null;
-        if (groupNode instanceof GroupNode) {
-            GroupNode gn = (GroupNode) groupNode;
-            ICallStackElement element = gn.getElement();
-            parentElement = element.getParentElement();
-        }
-        TimeGraphEntry groupRootEntry = threadEntry;
-        boolean found = false;
-        while (parentElement != null && !found) {
-            TimeGraphEntry levelEntry = fLevelEntries.get(parentElement);
-            if (levelEntry == null) {
-                levelEntry = new TimeGraphEntry(parentElement.getName(), 0L, 0L);
-                fLevelEntries.put(parentElement, levelEntry);
-            } else {
-                found = true;
-            }
-            levelEntry.addChild(groupRootEntry);
-            groupRootEntry = levelEntry;
-            parentElement = parentElement.getParentElement();
+    private void buildChildrenEntries(GroupNode groupNode, @Nullable TimeGraphEntry parent) {
+        // Add the entry
+        TimeGraphEntry groupEntry = new TimeGraphEntry(groupNode.getName(), 0L, 0L);
+        if (parent != null) {
+            parent.addChild(groupEntry);
+        } else {
+            fFlameGraphEntries.add(groupEntry);
         }
 
-        if (!found) {
-            fFlameGraphEntries.add(groupRootEntry);
+        // Create the children entries
+        for (GroupNode child : groupNode.getChildren()) {
+            buildChildrenEntries(child, groupEntry);
         }
+
+        // Create the callsites entries
+        if (!(groupNode instanceof LeafGroupNode)) {
+            return;
+        }
+        LeafGroupNode leaf = (LeafGroupNode) groupNode;
+
         List<FlamegraphDepthEntry> childrenEntries = new ArrayList<>();
         Deque<Long> timestampStack = new ArrayDeque<>();
         timestampStack.push(0L);
 
         // Sort children by duration
-        groupNode.getChildren().stream()
-                .sorted(Comparator.comparingLong(AggregatedCalledFunction::getDuration))
+        leaf.getAggregatedData().stream()
+                .sorted(Comparator.comparingLong(AggregatedCallSite::getLength))
                 .forEach(rootFunction -> {
                     setData(rootFunction, childrenEntries, timestampStack);
-                    long currentThreadDuration = timestampStack.pop() + rootFunction.getDuration();
+                    long currentThreadDuration = timestampStack.pop() + rootFunction.getLength();
                     timestampStack.push(currentThreadDuration);
                 });
         childrenEntries.forEach(child -> {
             if (child != null) {
-                threadEntry.addChild(child);
+                groupEntry.addChild(child);
             }
         });
-        threadEntry.updateEndTime(timestampStack.pop());
+        groupEntry.updateEndTime(timestampStack.pop());
+        return;
+
+
+
+
     }
 
     @Override

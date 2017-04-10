@@ -8,4 +8,4 @@
  *******************************************************************************/
 
 @org.eclipse.jdt.annotation.NonNullByDefault
-package org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph;
+package org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.instrumented;

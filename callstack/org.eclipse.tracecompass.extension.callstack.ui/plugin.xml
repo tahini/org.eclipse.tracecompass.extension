@@ -31,13 +31,6 @@
       <listener
             class="org.eclipse.tracecompass.extension.internal.callstack.ui.views.callstack.CallStackAnalysisListener">
       </listener>
-      <output
-            class="org.eclipse.tracecompass.tmf.ui.analysis.TmfAnalysisViewOutput"
-            id="org.eclipse.tracecompass.extension.internal.callstack.ui.stacktable">
-         <analysisModuleClass
-               class="org.eclipse.tracecompass.extension.internal.callstack.core.context.ContextCallStackAnalysis">
-         </analysisModuleClass>
-      </output>
    </extension>
    <extension
          point="org.eclipse.ui.views">
@@ -71,8 +64,80 @@
             category="org.eclipse.linuxtools.tmf.ui.views.category"
             class="org.eclipse.tracecompass.extension.internal.callstack.ui.views.stacktable.CallStackTableView"
             id="org.eclipse.tracecompass.extension.internal.callstack.ui.stacktable"
-            name="Stack Table"
+            name="%view.stacktable"
             restorable="true">
       </view>
+   </extension>
+      <extension
+         point="org.eclipse.ui.commands">
+      <command
+            categoryId="org.eclipse.linuxtools.tmf.ui.commands.category"
+            description="%command.configure_symbols.description"
+            id="org.eclipse.tracecompass.extension.callstack.ui.configure_symbols"
+            name="%command.configure_symbols">
+      </command>
+   </extension>
+   <extension
+         point="org.eclipse.ui.handlers">
+      <handler
+            class="org.eclipse.tracecompass.extension.internal.callstack.ui.handler.ConfigureSymbolHandler"
+            commandId="org.eclipse.tracecompass.extension.callstack.ui.configure_symbols">
+         <activeWhen>
+            <and>
+               <count
+                     value="1">
+               </count>
+               <iterate
+                     ifEmpty="false"
+                     operator="and">
+                  <or>
+                     <instanceof
+                           value="org.eclipse.tracecompass.tmf.ui.project.model.TmfTraceElement">
+                     </instanceof>
+                     <instanceof
+                           value="org.eclipse.tracecompass.tmf.ui.project.model.TmfExperimentElement">
+                     </instanceof>
+                  </or>
+               </iterate>
+            </and>
+         </activeWhen>
+      </handler>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            locationURI="popup:org.eclipse.ui.popup.any?after=additions">
+         <separator
+               name="org.eclipse.tracecompass.extension.callstack1"
+               visible="true">
+         </separator>
+        <command
+              commandId="org.eclipse.tracecompass.extension.callstack.ui.configure_symbols"
+              label="%command.configure_symbols"
+              style="push"
+              tooltip="%command.configure_symbols.description">
+           <visibleWhen
+                  checkEnabled="false">
+               <with
+                     variable="selection">
+                  <count
+                        value="1">
+                  </count>
+                  <iterate
+                        ifEmpty="false"
+                        operator="and">
+                     <or>
+                        <instanceof
+                              value="org.eclipse.tracecompass.tmf.ui.project.model.TmfTraceElement">
+                        </instanceof>
+                        <instanceof
+                              value="org.eclipse.tracecompass.tmf.ui.project.model.TmfExperimentElement">
+                        </instanceof>
+                     </or>
+                  </iterate>
+               </with>
+            </visibleWhen>
+        </command>
+      </menuContribution>
    </extension>
 </plugin>

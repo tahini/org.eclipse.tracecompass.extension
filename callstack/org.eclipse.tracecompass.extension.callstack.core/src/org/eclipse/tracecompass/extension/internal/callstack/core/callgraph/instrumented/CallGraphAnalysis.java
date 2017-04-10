@@ -7,7 +7,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
 
-package org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph;
+package org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.instrumented;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,6 +25,7 @@ import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.tracecompass.analysis.timing.core.segmentstore.IAnalysisProgressListener;
 import org.eclipse.tracecompass.analysis.timing.core.segmentstore.ISegmentStoreProvider;
 import org.eclipse.tracecompass.common.core.StreamUtils;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.ICallGraphProvider;
 import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callstack.CallStackAllGroupDescriptor;
 import org.eclipse.tracecompass.extension.internal.provisional.analysis.core.model.IHostModel;
 import org.eclipse.tracecompass.extension.internal.provisional.analysis.core.model.ModelManager;
@@ -66,7 +67,7 @@ import com.google.common.collect.ImmutableList;
  *
  * @author Sonia Farrah
  */
-public class CallGraphAnalysis extends TmfAbstractAnalysisModule implements ISegmentStoreProvider {
+public class CallGraphAnalysis extends TmfAbstractAnalysisModule implements ISegmentStoreProvider, ICallGraphProvider {
 
     // ------------------------------------------------------------------------
     // Attributes
@@ -351,6 +352,11 @@ public class CallGraphAnalysis extends TmfAbstractAnalysisModule implements ISeg
      */
     public void setGroupBy(@Nullable ICallStackGroupDescriptor descriptor) {
         fGroupBy = descriptor;
+    }
+
+    @Override
+    public Collection<org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.@NonNull GroupNode> getGroups() {
+        return Collections.emptyList();
     }
 
 }

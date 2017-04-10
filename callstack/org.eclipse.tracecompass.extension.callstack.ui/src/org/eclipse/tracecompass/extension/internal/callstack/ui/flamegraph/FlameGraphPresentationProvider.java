@@ -12,16 +12,11 @@ import java.text.Format;
 import java.text.NumberFormat;
 import java.util.Map;
 
-import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.graphics.Rectangle;
-import org.eclipse.tracecompass.analysis.timing.core.statistics.IStatistics;
 import org.eclipse.tracecompass.analysis.timing.ui.views.segmentstore.SubSecondTimeWithUnitFormat;
-import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph.AggregatedCalledFunctionStatistics;
-import org.eclipse.tracecompass.extension.internal.callstack.timing.core.callgraph.ICalledFunction;
-import org.eclipse.tracecompass.extension.internal.provisional.analysis.core.model.IHostModel;
 import org.eclipse.tracecompass.tmf.core.trace.ITmfTrace;
 import org.eclipse.tracecompass.tmf.core.trace.TmfTraceManager;
 import org.eclipse.tracecompass.tmf.ui.symbols.ISymbolProvider;
@@ -92,33 +87,34 @@ public class FlameGraphPresentationProvider extends TimeGraphPresentationProvide
 
     @Override
     public Map<String, String> getEventHoverToolTipInfo(ITimeEvent event, long hoverTime) {
-        AggregatedCalledFunctionStatistics statistics = ((FlamegraphEvent) event).getStatistics();
+//        AggregatedCalledFunctionStatistics statistics = ((FlamegraphEvent) event).getStatistics();
         ImmutableMap.Builder<String, String> builder = new ImmutableMap.Builder<>();
-        builder.put(Messages.FlameGraph_NbCalls, NumberFormat.getIntegerInstance().format(statistics.getDurationStatistics().getNbElements())); // $NON-NLS-1$
-        builder.put(String.valueOf(Messages.FlameGraph_Durations), ""); //$NON-NLS-1$
-        builder.put("\t" + Messages.FlameGraph_Duration, FORMATTER.format(event.getDuration())); //$NON-NLS-1$
-        builder.put("\t" + Messages.FlameGraph_AverageDuration, FORMATTER.format(statistics.getDurationStatistics().getMean())); // $NON-NLS-1$ //$NON-NLS-1$
-        builder.put("\t" + Messages.FlameGraph_MaxDuration, FORMATTER.format((statistics.getDurationStatistics().getMax()))); // $NON-NLS-1$ //$NON-NLS-1$
-        builder.put("\t" + Messages.FlameGraph_MinDuration, FORMATTER.format(statistics.getDurationStatistics().getMin())); // $NON-NLS-1$ //$NON-NLS-1$
-        builder.put("\t" + Messages.FlameGraph_Deviation, FORMATTER.format(statistics.getDurationStatistics().getStdDev())); //$NON-NLS-1$
-
-        IStatistics<@NonNull ICalledFunction> cpuStats = statistics.getCpuTimesStatistics();
-        // CPU times *if available)
-        if (cpuStats.getMax() != IHostModel.TIME_UNKNOWN) {
-            builder.put(Messages.FlameGraph_CpuTimes, ""); //$NON-NLS-1$
-            builder.put("\t" + Messages.FlameGraph_CpuTime, FORMATTER.format(((FlamegraphEvent) event).getCpuTime())); //$NON-NLS-1$
-            builder.put("\t" + Messages.FlameGraph_AverageCpuTime, FORMATTER.format(cpuStats.getMean())); // $NON-NLS-1$ //$NON-NLS-1$
-            builder.put("\t" + Messages.FlameGraph_MaxCpuTime, FORMATTER.format(cpuStats.getMax())); // $NON-NLS-1$ //$NON-NLS-1$
-            builder.put("\t" + Messages.FlameGraph_MinCpuTime, FORMATTER.format(cpuStats.getMin())); // $NON-NLS-1$ //$NON-NLS-1$
-            builder.put("\t" + Messages.FlameGraph_CpuTimeDeviation, FORMATTER.format(cpuStats.getStdDev())); //$NON-NLS-1$
-        }
-        // Self times
-        builder.put(Messages.FlameGraph_SelfTimes, ""); //$NON-NLS-1$
-        builder.put("\t" + Messages.FlameGraph_SelfTime, FORMATTER.format(((FlamegraphEvent) event).getSelfTime())); //$NON-NLS-1$
-        builder.put("\t" + Messages.FlameGraph_AverageSelfTime, FORMATTER.format(statistics.getSelfTimeStatistics().getMean())); // $NON-NLS-1$ //$NON-NLS-1$
-        builder.put("\t" + Messages.FlameGraph_MaxSelfTime, FORMATTER.format(statistics.getSelfTimeStatistics().getMax())); // $NON-NLS-1$ //$NON-NLS-1$
-        builder.put("\t" + Messages.FlameGraph_MinSelfTime, FORMATTER.format(statistics.getSelfTimeStatistics().getMin())); // $NON-NLS-1$ //$NON-NLS-1$
-        builder.put("\t" + Messages.FlameGraph_SelfTimeDeviation, FORMATTER.format(statistics.getSelfTimeStatistics().getStdDev())); //$NON-NLS-1$
+        long nb = ((FlamegraphEvent) event).getDuration();
+        builder.put(Messages.FlameGraph_NbCalls, NumberFormat.getIntegerInstance().format(nb)); // $NON-NLS-1$
+//        builder.put(String.valueOf(Messages.FlameGraph_Durations), ""); //$NON-NLS-1$
+//        builder.put("\t" + Messages.FlameGraph_Duration, FORMATTER.format(event.getDuration())); //$NON-NLS-1$
+//        builder.put("\t" + Messages.FlameGraph_AverageDuration, FORMATTER.format(statistics.getDurationStatistics().getMean())); // $NON-NLS-1$ //$NON-NLS-1$
+//        builder.put("\t" + Messages.FlameGraph_MaxDuration, FORMATTER.format((statistics.getDurationStatistics().getMax()))); // $NON-NLS-1$ //$NON-NLS-1$
+//        builder.put("\t" + Messages.FlameGraph_MinDuration, FORMATTER.format(statistics.getDurationStatistics().getMin())); // $NON-NLS-1$ //$NON-NLS-1$
+//        builder.put("\t" + Messages.FlameGraph_Deviation, FORMATTER.format(statistics.getDurationStatistics().getStdDev())); //$NON-NLS-1$
+//
+//        IStatistics<@NonNull ICalledFunction> cpuStats = statistics.getCpuTimesStatistics();
+//        // CPU times *if available)
+//        if (cpuStats.getMax() != IHostModel.TIME_UNKNOWN) {
+//            builder.put(Messages.FlameGraph_CpuTimes, ""); //$NON-NLS-1$
+//            builder.put("\t" + Messages.FlameGraph_CpuTime, FORMATTER.format(((FlamegraphEvent) event).getCpuTime())); //$NON-NLS-1$
+//            builder.put("\t" + Messages.FlameGraph_AverageCpuTime, FORMATTER.format(cpuStats.getMean())); // $NON-NLS-1$ //$NON-NLS-1$
+//            builder.put("\t" + Messages.FlameGraph_MaxCpuTime, FORMATTER.format(cpuStats.getMax())); // $NON-NLS-1$ //$NON-NLS-1$
+//            builder.put("\t" + Messages.FlameGraph_MinCpuTime, FORMATTER.format(cpuStats.getMin())); // $NON-NLS-1$ //$NON-NLS-1$
+//            builder.put("\t" + Messages.FlameGraph_CpuTimeDeviation, FORMATTER.format(cpuStats.getStdDev())); //$NON-NLS-1$
+//        }
+//        // Self times
+//        builder.put(Messages.FlameGraph_SelfTimes, ""); //$NON-NLS-1$
+//        builder.put("\t" + Messages.FlameGraph_SelfTime, FORMATTER.format(((FlamegraphEvent) event).getSelfTime())); //$NON-NLS-1$
+//        builder.put("\t" + Messages.FlameGraph_AverageSelfTime, FORMATTER.format(statistics.getSelfTimeStatistics().getMean())); // $NON-NLS-1$ //$NON-NLS-1$
+//        builder.put("\t" + Messages.FlameGraph_MaxSelfTime, FORMATTER.format(statistics.getSelfTimeStatistics().getMax())); // $NON-NLS-1$ //$NON-NLS-1$
+//        builder.put("\t" + Messages.FlameGraph_MinSelfTime, FORMATTER.format(statistics.getSelfTimeStatistics().getMin())); // $NON-NLS-1$ //$NON-NLS-1$
+//        builder.put("\t" + Messages.FlameGraph_SelfTimeDeviation, FORMATTER.format(statistics.getSelfTimeStatistics().getStdDev())); //$NON-NLS-1$
         return builder.build();
 
     }
@@ -151,18 +147,18 @@ public class FlameGraphPresentationProvider extends TimeGraphPresentationProvide
                 return "0x" + Long.toHexString(longAddress); //$NON-NLS-1$
             }
             // take time of max segment for time a query the symbol name
-            ICalledFunction maxObject = event.getStatistics().getDurationStatistics().getMaxObject();
-            if (maxObject == null) {
-                return "0x" + Long.toHexString(longAddress); //$NON-NLS-1$
-            }
-            long time = maxObject.getStart();
-            int pid = event.getProcessId();
-            if (pid > 0) {
-                String text = symbolProvider.getSymbolText(pid, time, longAddress);
-                if (text != null) {
-                    return text;
-                }
-            }
+//            ICalledFunction maxObject = event.getStatistics().getDurationStatistics().getMaxObject();
+//            if (maxObject == null) {
+//                return "0x" + Long.toHexString(longAddress); //$NON-NLS-1$
+//            }
+//            long time = maxObject.getStart();
+//            int pid = event.getProcessId();
+//            if (pid > 0) {
+//                String text = symbolProvider.getSymbolText(pid, time, longAddress);
+//                if (text != null) {
+//                    return text;
+//                }
+//            }
         } else {
             return event.getSymbol().toString();
         }
