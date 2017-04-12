@@ -26,7 +26,7 @@ public class CallStackAnalysisStub extends CallStackAnalysis {
     /**
      * The ID of this analysis
      */
-    public static final @NonNull String ID = "org.eclipse.tracecompass.analysis.timing.core.tests.callstack";
+    public static final @NonNull String ID = "org.eclipse.tracecompass.extension.callstack.core.tests.callstack";
 
     @Override
     protected @NonNull ITmfStateProvider createStateProvider() {

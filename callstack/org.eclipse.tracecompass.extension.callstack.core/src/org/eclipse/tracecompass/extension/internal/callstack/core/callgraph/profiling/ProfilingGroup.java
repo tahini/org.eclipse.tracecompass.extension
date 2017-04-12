@@ -12,14 +12,15 @@ package org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.pro
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.AggregatedCallSite;
 import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.LeafGroupNode;
+import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackGroupDescriptor;
 
 /**
  * @author Geneviève Bastien
  */
 public class ProfilingGroup extends LeafGroupNode {
 
-    public ProfilingGroup(@NonNull String name) {
-        super(name);
+    public ProfilingGroup(@NonNull String name, ICallStackGroupDescriptor descriptor) {
+        super(name, descriptor);
     }
 
     /**

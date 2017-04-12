@@ -88,12 +88,12 @@ public class FlameGraphContentProvider implements ITimeGraphContentProvider {
      *            A stack used to save the functions timeStamps
      */
     private void addEvent(AggregatedCallSite node, List<FlamegraphDepthEntry> childrenEntries, Deque<Long> timestampStack, int depth) {
-        node.getChildren().values().stream()
+        node.getChildren().stream()
                 .sorted(Comparator.comparingLong(AggregatedCallSite::getLength))
                 .forEach(child -> {
                     addEvent(child, childrenEntries, timestampStack, depth + 1);
                 });
-        node.getChildren().values().stream().forEach(child -> {
+        node.getChildren().stream().forEach(child -> {
             timestampStack.pop();
         });
 

@@ -10,14 +10,20 @@
 package org.eclipse.tracecompass.extension.internal.perf.profiling.core.callgraph;
 
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.jdt.annotation.Nullable;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.CallGraphGroupBy;
 import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.GroupNode;
 import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.ICallGraphProvider;
 import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.profiling.ProfilingGroup;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.profiling.ProfilingGroupDescriptor;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.profiling.SampledCallGraphFactory;
 import org.eclipse.tracecompass.extension.internal.perf.profiling.core.Activator;
+import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackGroupDescriptor;
 import org.eclipse.tracecompass.tmf.core.analysis.TmfAbstractAnalysisModule;
 import org.eclipse.tracecompass.tmf.core.event.ITmfEvent;
 import org.eclipse.tracecompass.tmf.core.event.ITmfEventField;
@@ -29,10 +35,23 @@ import org.eclipse.tracecompass.tmf.core.timestamp.TmfTimeRange;
 import org.eclipse.tracecompass.tmf.core.trace.ITmfTrace;
 import org.eclipse.tracecompass.tmf.core.trace.experiment.TmfExperiment;
 
+import com.google.common.collect.ImmutableList;
+
 public class PerfCallchainAnalysisModule extends TmfAbstractAnalysisModule implements ICallGraphProvider {
 
     private ITmfEventRequest fRequest;
-    private final ProfilingGroup fGroupNode = new ProfilingGroup("Data");
+    private final Map<Long, GroupNode> fProcessGroups = new HashMap<>();
+    private final Map<Long, ProfilingGroup> fThreadGroups = new HashMap<>();
+    private final ICallStackGroupDescriptor fProcessDescriptor;
+    private final ICallStackGroupDescriptor fThreadDescriptor;
+    private @Nullable ICallStackGroupDescriptor fGroupBy;
+
+//    private final ProfilingGroup fGroupNode = new ProfilingGroup("Data", CallGraphAllGroupDescriptor.getInstance());
+
+    public PerfCallchainAnalysisModule() {
+        fThreadDescriptor = new ProfilingGroupDescriptor("Threads", null);
+        fProcessDescriptor = new ProfilingGroupDescriptor("Process", fThreadDescriptor);
+    }
 
     @Override
     protected boolean executeAnalysis(@NonNull IProgressMonitor monitor) throws TmfAnalysisException {
@@ -125,13 +144,49 @@ public class PerfCallchainAnalysisModule extends TmfAbstractAnalysisModule imple
          * @param event
          */
         private ProfilingGroup getLeafGroup(ITmfEvent event) {
+            Long fieldValue = event.getContent().getFieldValue(Long.class, "perf_tid");
+            Long tid = fieldValue == null ? -1 : fieldValue;
+            ProfilingGroup threadGroup = fThreadGroups.get(tid);
+            if (threadGroup != null) {
+                return threadGroup;
+            }
+            fieldValue = event.getContent().getFieldValue(Long.class, "perf_pid");
+            Long pid = fieldValue == null ? -1 : fieldValue;
+            GroupNode processGroup = fProcessGroups.get(pid);
+            if (processGroup == null) {
+                processGroup = new GroupNode(String.valueOf(pid), fThreadDescriptor);
+                fProcessGroups.put(pid, processGroup);
+            }
+            threadGroup = new ProfilingGroup(String.valueOf(tid), fThreadDescriptor);
+            processGroup.addChild(threadGroup);
+            fThreadGroups.put(tid, threadGroup);
             // TODO: see if we can add a group
-            return fGroupNode;
+            return threadGroup;
         }
     }
 
     @Override
     public Collection<GroupNode> getGroups() {
-        return Collections.singleton(fGroupNode);
+        ICallStackGroupDescriptor groupBy = fGroupBy;
+        Collection<GroupNode> groups = fProcessGroups.values();
+        // Fast return: return all groups
+        if (groupBy == null) {
+            return ImmutableList.copyOf(groups);
+        }
+
+        return CallGraphGroupBy.groupCallGraphBy(groupBy, groups, SampledCallGraphFactory.getInstance());
+
+
     }
+
+    @Override
+    public Collection<ICallStackGroupDescriptor> getGroupDescriptor() {
+        return ImmutableList.of(fProcessDescriptor, fThreadDescriptor);
+    }
+
+    @Override
+    public void setGroupBy(@Nullable ICallStackGroupDescriptor descriptor) {
+        fGroupBy = descriptor;
+    }
+
 }

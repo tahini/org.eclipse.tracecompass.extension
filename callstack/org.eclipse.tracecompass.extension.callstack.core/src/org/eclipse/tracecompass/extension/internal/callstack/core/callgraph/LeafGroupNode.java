@@ -14,13 +14,14 @@ import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackGroupDescriptor;
 
 public class LeafGroupNode extends GroupNode {
 
     private final List<AggregatedCallSite> fCallSites = new ArrayList<>();
 
-    public LeafGroupNode(String name) {
-        super(name);
+    public LeafGroupNode(String name, ICallStackGroupDescriptor descriptor) {
+        super(name, descriptor);
     }
 
     @Override
@@ -38,4 +39,8 @@ public class LeafGroupNode extends GroupNode {
         fCallSites.add(ags);
     }
 
+    @Override
+    public final boolean isLeaf() {
+        return true;
+    }
 }

@@ -12,12 +12,18 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.Nullable;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.GroupNode;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.ICallGraphProvider;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.instrumented.CallGraphAnalysis;
 import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.CallStackSeries;
+import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackGroupDescriptor;
 import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackProvider;
 import org.eclipse.tracecompass.statesystem.core.ITmfStateSystem;
 import org.eclipse.tracecompass.tmf.core.callstack.CallStackStateProvider;
+import org.eclipse.tracecompass.tmf.core.exceptions.TmfAnalysisException;
 import org.eclipse.tracecompass.tmf.core.statesystem.TmfStateSystemAnalysisModule;
 import org.eclipse.tracecompass.tmf.core.trace.ITmfTrace;
 
@@ -31,7 +37,7 @@ import com.google.common.collect.ImmutableList;
  * @author Matthew Khouzam
  * @author Geneviève Bastien
  */
-public abstract class CallStackAnalysis extends TmfStateSystemAnalysisModule implements ICallStackProvider {
+public abstract class CallStackAnalysis extends TmfStateSystemAnalysisModule implements ICallStackProvider, ICallGraphProvider {
 
     private static final String[] DEFAULT_PROCESSES_PATTERN = new String[] { CallStackStateProvider.PROCESSES, "*" }; //$NON-NLS-1$
     private static final String[] DEFAULT_THREADS_PATTERN = new String[] { "*" }; //$NON-NLS-1$
@@ -41,12 +47,23 @@ public abstract class CallStackAnalysis extends TmfStateSystemAnalysisModule imp
 
     private @Nullable Collection<@NonNull CallStackSeries> fCallStacks;
 
+    private CallGraphAnalysis fCallGraph;
+
     /**
      * Abstract constructor (should only be called via the sub-classes'
      * constructors.
      */
     protected CallStackAnalysis() {
         super();
+        fCallGraph = new CallGraphAnalysis();
+    }
+
+    @Override
+    public boolean setTrace(@NonNull ITmfTrace trace) throws TmfAnalysisException {
+        if (!super.setTrace(trace)) {
+            return false;
+        }
+        return fCallGraph.setTrace(trace);
     }
 
     @Override
@@ -61,6 +78,18 @@ public abstract class CallStackAnalysis extends TmfStateSystemAnalysisModule imp
             fCallStacks = callstacks;
         }
         return callstacks;
+    }
+
+    @Override
+    protected boolean executeAnalysis(@Nullable IProgressMonitor monitor) {
+        fCallGraph.setId(getId());
+        boolean ret = super.executeAnalysis(monitor);
+        if (!ret) {
+            return ret;
+        }
+        fCallGraph.schedule();
+        // TODO Wait for the callgraph to be finished or not?
+        return true;
     }
 
     /**
@@ -82,5 +111,36 @@ public abstract class CallStackAnalysis extends TmfStateSystemAnalysisModule imp
         }
         return trace.getHostId();
     }
+
+    /**
+     * Get the groups
+     *
+     * @return
+     */
+    @Override
+    public Collection<GroupNode> getGroups() {
+        fCallGraph.schedule();
+        fCallGraph.waitForCompletion();
+        return fCallGraph.getGroups();
+    }
+
+    @Override
+    public Collection<ICallStackGroupDescriptor> getGroupDescriptor() {
+        fCallGraph.schedule();
+        fCallGraph.waitForCompletion();
+        return fCallGraph.getGroupDescriptor();
+    }
+
+    @Override
+    public void dispose() {
+        super.dispose();
+        fCallGraph.dispose();
+    }
+
+    @Override
+    public void setGroupBy(@Nullable ICallStackGroupDescriptor descriptor) {
+        fCallGraph.setGroupBy(descriptor);
+    }
+
 
 }

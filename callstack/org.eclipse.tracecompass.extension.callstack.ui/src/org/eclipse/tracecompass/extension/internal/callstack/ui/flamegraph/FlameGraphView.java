@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -49,11 +50,11 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
+import org.eclipse.tracecompass.common.core.NonNullUtils;
+import org.eclipse.tracecompass.common.core.StreamUtils;
 import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.GroupNode;
 import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.ICallGraphProvider;
-import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.instrumented.CallGraphAnalysis;
 import org.eclipse.tracecompass.extension.internal.callstack.ui.Activator;
-import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.CallStackSeries;
 import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackGroupDescriptor;
 import org.eclipse.tracecompass.tmf.core.analysis.IAnalysisModule;
 import org.eclipse.tracecompass.tmf.core.signal.TmfSignalHandler;
@@ -199,8 +200,16 @@ public class FlameGraphView extends TmfView {
         if (trace == null) {
             return null;
         }
+        String analysisId = NonNullUtils.nullToEmptyString(getViewSite().getSecondaryId());
         Iterable<ICallGraphProvider> modules = TmfTraceUtils.getAnalysisModulesOfClass(trace, ICallGraphProvider.class);
-        return modules;
+        return StreamUtils.getStream(modules)
+                .filter(m -> {
+                    if (m instanceof IAnalysisModule) {
+                        return ((IAnalysisModule) m).getId().equals(analysisId);
+                    }
+                    return true;
+                })
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -452,21 +461,14 @@ public class FlameGraphView extends TmfView {
                         return menu;
                     }
                     ICallGraphProvider provider = iterator.next();
-                    if (!(provider instanceof CallGraphAnalysis)) {
-                        return menu;
-                    }
-                    CallGraphAnalysis callgraphModule = (CallGraphAnalysis) provider;
-                    Collection<@NonNull CallStackSeries> series = callgraphModule.getSeries();
-                    series.forEach(s -> {
-                        ICallStackGroupDescriptor group = s.getAllGroup();
-                        Action groupAction = createActionForGroup(callgraphModule, group);
-                        new ActionContributionItem(groupAction).fill(menu, -1);
-                        group = s.getRootGroup();
+                    Collection<ICallStackGroupDescriptor> series = provider.getGroupDescriptor();
+                    series.forEach(group -> {
+                        ICallStackGroupDescriptor subGroup = group;
                         do {
-                            groupAction = createActionForGroup(callgraphModule, group);
+                            Action groupAction = createActionForGroup(provider, subGroup);
                             new ActionContributionItem(groupAction).fill(menu, -1);
-                            group = group.getNextGroup();
-                        } while (group != null);
+                            subGroup = subGroup.getNextGroup();
+                        } while (subGroup != null);
                     });
                     return menu;
                 }
@@ -480,12 +482,12 @@ public class FlameGraphView extends TmfView {
         return fAggregateByAction;
     }
 
-    private Action createActionForGroup(CallGraphAnalysis callgraphModule, ICallStackGroupDescriptor descriptor) {
+    private Action createActionForGroup(ICallGraphProvider provider, ICallStackGroupDescriptor descriptor) {
         final Action groupAction = new Action(descriptor.getName(), IAction.AS_RADIO_BUTTON) {
             @Override
             public void run() {
-                callgraphModule.setGroupBy(descriptor);
-                buildFlameGraph(Collections.singleton(callgraphModule));
+                provider.setGroupBy(descriptor);
+                buildFlameGraph(Collections.singleton(provider));
             }
         };
         return groupAction;

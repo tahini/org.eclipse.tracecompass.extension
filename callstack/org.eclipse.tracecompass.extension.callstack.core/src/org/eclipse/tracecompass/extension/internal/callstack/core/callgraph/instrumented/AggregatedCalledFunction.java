@@ -9,12 +9,8 @@
 
 package org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.instrumented;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.eclipse.jdt.annotation.Nullable;
-import org.eclipse.tracecompass.common.core.NonNullUtils;
+import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.AggregatedCallSite;
 import org.eclipse.tracecompass.extension.internal.provisional.analysis.core.model.IHostModel;
 
 /**
@@ -32,17 +28,12 @@ import org.eclipse.tracecompass.extension.internal.provisional.analysis.core.mod
  * @author Sonia Farrah
  *
  */
-public class AggregatedCalledFunction {
+public class AggregatedCalledFunction extends AggregatedCallSite {
 
     // ------------------------------------------------------------------------
     // Attributes
     // ------------------------------------------------------------------------
 
-    private final Object fSymbol;
-    private final int fDepth;
-    private final int fMaxDepth;
-    private final Map<Object, AggregatedCalledFunction> fChildren = new HashMap<>();
-    private final @Nullable AggregatedCalledFunction fParent;
     private final AggregatedCalledFunctionStatistics fStatistics;
     private long fDuration;
     private long fSelfTime;
@@ -57,15 +48,26 @@ public class AggregatedCalledFunction {
      * @param parent
      *            the parent entry
      */
-    public AggregatedCalledFunction(ICalledFunction function, AggregatedCalledFunction parent) {
-        fSymbol = function.getSymbol();
+    public AggregatedCalledFunction(Object symbol) {
+        super(symbol);
+        fStatistics = new AggregatedCalledFunctionStatistics();
+        fProcessId = -1;
+    }
+
+    /**
+     * Constructor, parent is not null
+     *
+     * @param function
+     *            called function
+     * @param parent
+     *            the parent entry
+     */
+    public AggregatedCalledFunction(ICalledFunction function) {
+        super(function.getSymbol());
         fDuration = function.getLength();
         fSelfTime = function.getLength();
-        fDepth = function.getDepth();
         fProcessId = function.getProcessId();
         fCpuTime = function.getCpuTime();
-        fMaxDepth = parent.getMaxDepth();
-        fParent = parent;
         fStatistics = new AggregatedCalledFunctionStatistics();
     }
 
@@ -78,42 +80,30 @@ public class AggregatedCalledFunction {
      *            the maximum depth
      */
     public AggregatedCalledFunction(AbstractCalledFunction calledFunction, int maxDepth) {
-        fSymbol = calledFunction.getSymbol();
+        super(calledFunction.getSymbol());
         fDuration = calledFunction.getLength();
         fSelfTime = calledFunction.getLength();
-        fDepth = calledFunction.getDepth();
         fProcessId = calledFunction.getProcessId();
         fCpuTime = calledFunction.getCpuTime();
-        fMaxDepth = maxDepth;
-        fParent = null;
         fStatistics = new AggregatedCalledFunctionStatistics();
     }
 
-    /**
-     * The function's symbol (address or name)
-     *
-     * @return The function's symbol
-     */
-    public Object getSymbol() {
-        return fSymbol;
+    @Override
+    public long getLength() {
+        return fDuration;
     }
 
-    /**
-     * The callees of the function
-     *
-     * @return The function's callees
-     */
-    public synchronized Collection<AggregatedCalledFunction> getChildren() {
-        return fChildren.values();
-    }
+    @Override
+    protected void mergeData(@NonNull AggregatedCallSite other) {
+        if (!(other instanceof AggregatedCalledFunction)) {
+            return;
+        }
+        AggregatedCalledFunction otherFct = (AggregatedCalledFunction) other;
 
-    /**
-     * The function's caller
-     *
-     * @return The caller of a function
-     */
-    public @Nullable AggregatedCalledFunction getParent() {
-        return fParent;
+        addToDuration(otherFct.getDuration());
+        addToSelfTime(otherFct.getSelfTime());
+        addToCpuTime(otherFct.getCpuTime());
+        getFunctionStatistics().merge(otherFct.getFunctionStatistics(), true);
     }
 
     /**
@@ -129,14 +119,12 @@ public class AggregatedCalledFunction {
     public synchronized void addChild(AbstractCalledFunction child, AggregatedCalledFunction aggregatedChild) {
         // Update the child's statistics with itself
         fSelfTime -= aggregatedChild.getDuration();
-        aggregatedChild.getFunctionStatistics().update(child);
-        AggregatedCalledFunction node = fChildren.get(aggregatedChild.getSymbol());
-        if (node == null) {
-            fChildren.put(aggregatedChild.getSymbol(), aggregatedChild);
-        } else {
-            merge(node, aggregatedChild, false);
-            fChildren.replace(node.getSymbol(), node);
-        }
+        aggregatedChild.addFunctionCall(child);
+        super.addChild(aggregatedChild);
+    }
+
+    public synchronized void addFunctionCall(AbstractCalledFunction call) {
+        getFunctionStatistics().update(call);
     }
 
     /**
@@ -149,47 +137,47 @@ public class AggregatedCalledFunction {
         fDuration += duration;
     }
 
-    /**
-     * Merge the callees of two functions.
-     *
-     * @param firstNode
-     *            The first parent secondNode The second parent
-     */
-    private static void mergeChildren(AggregatedCalledFunction firstNode, AggregatedCalledFunction secondNode) {
-        for (Map.Entry<Object, AggregatedCalledFunction> FunctionEntry : secondNode.fChildren.entrySet()) {
-            Object childSymbol = NonNullUtils.checkNotNull(FunctionEntry.getKey());
-            AggregatedCalledFunction secondNodeChild = NonNullUtils.checkNotNull(FunctionEntry.getValue());
-            AggregatedCalledFunction aggregatedCalledFunction = firstNode.fChildren.get(childSymbol);
-            if (aggregatedCalledFunction == null) {
-                firstNode.fChildren.put(secondNodeChild.getSymbol(), secondNodeChild);
-            } else {
-                // combine children
-                AggregatedCalledFunction firstNodeChild = aggregatedCalledFunction;
-                merge(firstNodeChild, secondNodeChild, true);
-                firstNode.fChildren.replace(firstNodeChild.getSymbol(), firstNodeChild);
-            }
-        }
-    }
-
-    /**
-     * Merge two functions, add durations, self times, increment the calls,
-     * update statistics and merge children.
-     *
-     * @param destination
-     *            the node to merge to
-     * @param source
-     *            the node to merge
-     */
-    private static void merge(AggregatedCalledFunction destination, AggregatedCalledFunction source, boolean isGroup) {
-        long sourceDuration = source.getDuration();
-        long sourceSelfTime = source.getSelfTime();
-        destination.addToDuration(sourceDuration);
-        destination.addToSelfTime(sourceSelfTime);
-        destination.addToCpuTime(source.getCpuTime());
-        destination.getFunctionStatistics().merge(source.getFunctionStatistics(), isGroup);
-        // merge the children callees.
-        mergeChildren(destination, source);
-    }
+//    /**
+//     * Merge the callees of two functions.
+//     *
+//     * @param firstNode
+//     *            The first parent secondNode The second parent
+//     */
+//    private static void mergeChildren(AggregatedCalledFunction firstNode, AggregatedCalledFunction secondNode) {
+//        for (Map.Entry<Object, AggregatedCalledFunction> FunctionEntry : secondNode.fChildren.entrySet()) {
+//            Object childSymbol = NonNullUtils.checkNotNull(FunctionEntry.getKey());
+//            AggregatedCalledFunction secondNodeChild = NonNullUtils.checkNotNull(FunctionEntry.getValue());
+//            AggregatedCalledFunction aggregatedCalledFunction = firstNode.fChildren.get(childSymbol);
+//            if (aggregatedCalledFunction == null) {
+//                firstNode.fChildren.put(secondNodeChild.getSymbol(), secondNodeChild);
+//            } else {
+//                // combine children
+//                AggregatedCalledFunction firstNodeChild = aggregatedCalledFunction;
+//                merge(firstNodeChild, secondNodeChild, true);
+//                firstNode.fChildren.replace(firstNodeChild.getSymbol(), firstNodeChild);
+//            }
+//        }
+//    }
+//
+//    /**
+//     * Merge two functions, add durations, self times, increment the calls,
+//     * update statistics and merge children.
+//     *
+//     * @param destination
+//     *            the node to merge to
+//     * @param source
+//     *            the node to merge
+//     */
+//    private static void merge(AggregatedCalledFunction destination, AggregatedCalledFunction source, boolean isGroup) {
+//        long sourceDuration = source.getDuration();
+//        long sourceSelfTime = source.getSelfTime();
+//        destination.addToDuration(sourceDuration);
+//        destination.addToSelfTime(sourceSelfTime);
+//        destination.addToCpuTime(source.getCpuTime());
+//        destination.getFunctionStatistics().merge(source.getFunctionStatistics(), isGroup);
+//        // merge the children callees.
+//        mergeChildren(destination, source);
+//    }
 
     private void addToCpuTime(long cpuTime) {
         if (cpuTime != IHostModel.TIME_UNKNOWN) {
@@ -204,24 +192,6 @@ public class AggregatedCalledFunction {
      */
     public long getDuration() {
         return fDuration;
-    }
-
-    /**
-     * The function's depth
-     *
-     * @return The depth of the function
-     */
-    public int getDepth() {
-        return fDepth;
-    }
-
-    /**
-     * The depth of the aggregated tree
-     *
-     * @return The depth of the aggregated tree
-     */
-    public int getMaxDepth() {
-        return fMaxDepth;
     }
 
     /**
@@ -270,15 +240,6 @@ public class AggregatedCalledFunction {
     }
 
     /**
-     * Returns whether the function has callees.
-     *
-     * @return Boolean
-     */
-    public Boolean hasChildren() {
-        return !fChildren.isEmpty();
-    }
-
-    /**
      * The function's statistics
      *
      * @return The function's statistics
@@ -291,4 +252,5 @@ public class AggregatedCalledFunction {
     public String toString() {
         return "Aggregate Function: " + getSymbol() + ", Duration: " + getDuration() + ", Self Time: " + fSelfTime + " on " + getNbCalls() + " calls"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
     }
+
 }

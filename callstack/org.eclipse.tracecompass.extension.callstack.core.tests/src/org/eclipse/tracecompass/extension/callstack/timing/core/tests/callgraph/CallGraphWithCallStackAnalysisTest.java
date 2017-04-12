@@ -11,6 +11,7 @@ package org.eclipse.tracecompass.extension.callstack.timing.core.tests.callgraph
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.Collection;
@@ -19,14 +20,16 @@ import java.util.Iterator;
 
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.tracecompass.extension.callstack.timing.core.tests.callstack.CallStackTestBase;
+import org.eclipse.tracecompass.extension.callstack.timing.core.tests.stubs.CallStackAnalysisStub;
 import org.eclipse.tracecompass.extension.internal.analysis.core.model.CompositeHostModel;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.AggregatedCallSite;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.GroupNode;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.LeafGroupNode;
 import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.instrumented.AggregatedCalledFunction;
 import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.instrumented.CallGraphAnalysis;
-import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.instrumented.GroupNode;
 import org.eclipse.tracecompass.extension.internal.provisional.analysis.core.concepts.ICpuTimeProvider;
 import org.eclipse.tracecompass.extension.internal.provisional.analysis.core.model.IHostModel;
 import org.eclipse.tracecompass.extension.internal.provisional.analysis.core.model.ModelManager;
-import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackElement;
 import org.eclipse.tracecompass.tmf.core.exceptions.TmfAnalysisException;
 import org.junit.After;
 import org.junit.Test;
@@ -37,15 +40,6 @@ import org.junit.Test;
  * @author Geneviève Bastien
  */
 public class CallGraphWithCallStackAnalysisTest extends CallStackTestBase {
-
-    private CallGraphAnalysis getCallGraphModule() throws TmfAnalysisException {
-        CallGraphAnalysis cga = new CallGraphAnalysis();
-        cga.setTrace(getTrace());
-
-        cga.schedule();
-        cga.waitForCompletion();
-        return cga;
-    }
 
     /**
      *
@@ -59,32 +53,23 @@ public class CallGraphWithCallStackAnalysisTest extends CallStackTestBase {
 
     /**
      * Test tha callgraph with a small trace
-     *
-     * @throws TmfAnalysisException
-     *             Propagates exceptions from analyses
      */
     @Test
-    public void testCallGraph() throws TmfAnalysisException {
-        CallGraphAnalysis cga = getCallGraphModule();
+    public void testCallGraph() {
+        CallStackAnalysisStub cga = getModule();
 
         try {
-            Collection<AggregatedCalledFunction> threadNodes = cga.getGroupNodes();
-            assertEquals(4, threadNodes.size());
-            for (AggregatedCalledFunction rootNode : threadNodes) {
-                GroupNode groupNode = (GroupNode) rootNode;
-                ICallStackElement parentElement2 = groupNode.getElement().getParentElement();
-                assertNotNull(parentElement2);
-                ICallStackElement parentElement = parentElement2.getParentElement();
-                assertNotNull(parentElement);
-                String firstLevelName = parentElement.getName();
+            Collection<GroupNode> groups = cga.getGroups();
+            for (GroupNode group : groups) {
+                String firstLevelName = group.getName();
                 switch (firstLevelName) {
                 case "1":
                     // Make sure the symbol key is correctly resolved
-                    verifyProcess1(groupNode);
+                    verifyProcess1(group);
                     break;
                 case "5":
                     // Make sure the symbol key is correctly resolved
-                    verifyProcess5(groupNode);
+                    verifyProcess5(group);
                     break;
                 default:
                     fail("Unknown process in callstack");
@@ -95,210 +80,221 @@ public class CallGraphWithCallStackAnalysisTest extends CallStackTestBase {
         }
     }
 
-    private static void verifyProcess1(GroupNode groupNode) {
-        ICallStackElement parentElement2 = groupNode.getElement().getParentElement();
-        assertNotNull(parentElement2);
-        String secondLevelName = parentElement2.getName();
-        Collection<AggregatedCalledFunction> children = groupNode.getChildren();
-        switch (secondLevelName) {
-        case "2":
-            assertEquals(2, children.size());
-            for (AggregatedCalledFunction func : children) {
-                switch ((String) func.getSymbol()) {
-                case "op1":
-                    assertEquals(1, func.getDepth());
-                    assertEquals(9, func.getDuration());
-                    assertEquals(5, func.getSelfTime());
-                    assertEquals(IHostModel.TIME_UNKNOWN, func.getCpuTime());
-                    assertEquals(1, func.getNbCalls());
-                    assertEquals(1, func.getProcessId());
-                    assertEquals(1, func.getChildren().size());
-                    AggregatedCalledFunction next = func.getChildren().iterator().next();
-                    assertNotNull(next);
-                    assertEquals(2, next.getDepth());
-                    assertEquals(4, next.getDuration());
-                    assertEquals(3, next.getSelfTime());
-                    assertEquals(IHostModel.TIME_UNKNOWN, next.getCpuTime());
-                    assertEquals(1, next.getNbCalls());
-                    assertEquals(1, next.getProcessId());
-                    assertEquals("op2", next.getSymbol());
-                    assertEquals(1, next.getChildren().size());
-                    AggregatedCalledFunction third = next.getChildren().iterator().next();
-                    assertNotNull(third);
-                    assertEquals(3, third.getDepth());
-                    assertEquals(1, third.getDuration());
-                    assertEquals(1, third.getSelfTime());
-                    assertEquals(IHostModel.TIME_UNKNOWN, third.getCpuTime());
-                    assertEquals(1, third.getNbCalls());
-                    assertEquals(1, third.getProcessId());
-                    assertEquals("op3", third.getSymbol());
-                    assertEquals(0, third.getChildren().size());
-                    break;
-                case "op4":
-                    assertEquals(1, func.getDepth());
-                    assertEquals(8, func.getDuration());
-                    assertEquals(8, func.getSelfTime());
-                    assertEquals(IHostModel.TIME_UNKNOWN, func.getCpuTime());
-                    assertEquals(1, func.getNbCalls());
-                    assertEquals(1, func.getProcessId());
-                    assertEquals(0, func.getChildren().size());
-                    break;
-                default:
-                    fail("Unknown symbol for thread 2" + func.getSymbol());
+    private static void verifyProcess1(GroupNode group) {
+        Collection<GroupNode> secondLevels = group.getChildren();
+        assertEquals(2, secondLevels.size());
+        for (GroupNode secondLevel : secondLevels) {
+            String secondLevelName = secondLevel.getName();
+            assertEquals(1, secondLevel.getChildren().size());
+            GroupNode thirdLevel = secondLevel.getChildren().iterator().next();
+            assertTrue(thirdLevel instanceof LeafGroupNode);
+            Collection<AggregatedCallSite> children = ((LeafGroupNode) thirdLevel).getAggregatedData();
+            switch (secondLevelName) {
+            case "2":
+                assertEquals(2, children.size());
+                for (AggregatedCallSite child : children) {
+                    assertTrue(child instanceof AggregatedCalledFunction);
+                    AggregatedCalledFunction func = (AggregatedCalledFunction) child;
+                    switch ((String) func.getSymbol()) {
+                    case "op1":
+                        assertEquals(9, func.getDuration());
+                        assertEquals(5, func.getSelfTime());
+                        assertEquals(IHostModel.TIME_UNKNOWN, func.getCpuTime());
+                        assertEquals(1, func.getNbCalls());
+                        assertEquals(1, func.getProcessId());
+                        assertEquals(1, func.getChildren().size());
+                        AggregatedCalledFunction next = (AggregatedCalledFunction) func.getChildren().iterator().next();
+                        assertNotNull(next);
+                        assertEquals(4, next.getDuration());
+                        assertEquals(3, next.getSelfTime());
+                        assertEquals(IHostModel.TIME_UNKNOWN, next.getCpuTime());
+                        assertEquals(1, next.getNbCalls());
+                        assertEquals(1, next.getProcessId());
+                        assertEquals("op2", next.getSymbol());
+                        assertEquals(1, next.getChildren().size());
+                        AggregatedCalledFunction third = (AggregatedCalledFunction) next.getChildren().iterator().next();
+                        assertNotNull(third);
+                        assertEquals(1, third.getDuration());
+                        assertEquals(1, third.getSelfTime());
+                        assertEquals(IHostModel.TIME_UNKNOWN, third.getCpuTime());
+                        assertEquals(1, third.getNbCalls());
+                        assertEquals(1, third.getProcessId());
+                        assertEquals("op3", third.getSymbol());
+                        assertEquals(0, third.getChildren().size());
+                        break;
+                    case "op4":
+                        assertEquals(8, func.getDuration());
+                        assertEquals(8, func.getSelfTime());
+                        assertEquals(IHostModel.TIME_UNKNOWN, func.getCpuTime());
+                        assertEquals(1, func.getNbCalls());
+                        assertEquals(1, func.getProcessId());
+                        assertEquals(0, func.getChildren().size());
+                        break;
+                    default:
+                        fail("Unknown symbol for thread 2" + func.getSymbol());
+                    }
                 }
-            }
-            break;
-        case "3":
-            assertEquals(1, children.size());
-            AggregatedCalledFunction func = children.iterator().next();
-            assertEquals("op2", func.getSymbol());
+                break;
+            case "3":
+                assertEquals(1, children.size());
+                AggregatedCalledFunction func = (AggregatedCalledFunction) children.iterator().next();
+                assertEquals("op2", func.getSymbol());
 
-            assertEquals(1, func.getDepth());
-            assertEquals(17, func.getDuration());
-            assertEquals(10, func.getSelfTime());
-            assertEquals(IHostModel.TIME_UNKNOWN, func.getCpuTime());
-            assertEquals(1, func.getNbCalls());
-            assertEquals(1, func.getProcessId());
-            assertEquals(2, func.getChildren().size());
-            for (AggregatedCalledFunction next : func.getChildren()) {
-                switch (next.getSymbol().toString()) {
-                case "op3":
-                    assertEquals(2, next.getDepth());
-                    assertEquals(1, next.getDuration());
-                    assertEquals(1, next.getSelfTime());
-                    assertEquals(IHostModel.TIME_UNKNOWN, next.getCpuTime());
-                    assertEquals(1, next.getNbCalls());
-                    assertEquals(1, next.getProcessId());
-                    assertEquals(0, next.getChildren().size());
-                    break;
-                case "op2":
-                    assertEquals(2, next.getDepth());
-                    assertEquals(6, next.getDuration());
-                    assertEquals(6, next.getSelfTime());
-                    assertEquals(IHostModel.TIME_UNKNOWN, next.getCpuTime());
-                    assertEquals(1, next.getNbCalls());
-                    assertEquals(1, next.getProcessId());
-                    assertEquals(0, next.getChildren().size());
-                    break;
-                default:
-                    fail("Unknown symbol for thread 2" + func.getSymbol());
+                assertEquals(17, func.getDuration());
+                assertEquals(10, func.getSelfTime());
+                assertEquals(IHostModel.TIME_UNKNOWN, func.getCpuTime());
+                assertEquals(1, func.getNbCalls());
+                assertEquals(1, func.getProcessId());
+                assertEquals(2, func.getChildren().size());
+                for (AggregatedCallSite nextChild : func.getChildren()) {
+                    assertTrue(nextChild instanceof AggregatedCalledFunction);
+                    AggregatedCalledFunction next = (AggregatedCalledFunction) nextChild;
+                    switch (next.getSymbol().toString()) {
+                    case "op3":
+                        assertEquals(1, next.getDuration());
+                        assertEquals(1, next.getSelfTime());
+                        assertEquals(IHostModel.TIME_UNKNOWN, next.getCpuTime());
+                        assertEquals(1, next.getNbCalls());
+                        assertEquals(1, next.getProcessId());
+                        assertEquals(0, next.getChildren().size());
+                        break;
+                    case "op2":
+                        assertEquals(6, next.getDuration());
+                        assertEquals(6, next.getSelfTime());
+                        assertEquals(IHostModel.TIME_UNKNOWN, next.getCpuTime());
+                        assertEquals(1, next.getNbCalls());
+                        assertEquals(1, next.getProcessId());
+                        assertEquals(0, next.getChildren().size());
+                        break;
+                    default:
+                        fail("Unknown symbol for thread 2" + func.getSymbol());
+                    }
                 }
-            }
 
-            break;
-        default:
-            fail("Unknown process in callstack");
+                break;
+            default:
+                fail("Unknown process in callstack");
+            }
         }
     }
 
-    private static void verifyProcess5(GroupNode groupNode) {
-        ICallStackElement parentElement2 = groupNode.getElement().getParentElement();
-        assertNotNull(parentElement2);
-        String secondLevelName = parentElement2.getName();
-        Collection<AggregatedCalledFunction> children = groupNode.getChildren();
-        switch (secondLevelName) {
-        case "6": {
-            assertEquals(1, children.size());
-            AggregatedCalledFunction func = children.iterator().next();
-            assertNotNull(func);
-            assertEquals("op1", func.getSymbol());
-            assertEquals(1, func.getDepth());
-            assertEquals(19, func.getDuration());
-            assertEquals(6, func.getSelfTime());
-            assertEquals(IHostModel.TIME_UNKNOWN, func.getCpuTime());
-            assertEquals(1, func.getNbCalls());
-            assertEquals(5, func.getProcessId());
-            assertEquals(2, func.getChildren().size());
+    private static void verifyProcess5(GroupNode group) {
+        Collection<GroupNode> secondLevels = group.getChildren();
+        assertEquals(2, secondLevels.size());
+        for (GroupNode secondLevel : secondLevels) {
+            String secondLevelName = secondLevel.getName();
+            assertEquals(1, secondLevel.getChildren().size());
+            GroupNode thirdLevel = secondLevel.getChildren().iterator().next();
+            assertTrue(thirdLevel instanceof LeafGroupNode);
+            Collection<AggregatedCallSite> children = ((LeafGroupNode) thirdLevel).getAggregatedData();
+            switch (secondLevelName) {
+            case "6": {
+                assertEquals(1, children.size());
+                AggregatedCalledFunction func = (AggregatedCalledFunction) children.iterator().next();
+                assertNotNull(func);
+                assertEquals("op1", func.getSymbol());
+                assertEquals(19, func.getDuration());
+                assertEquals(6, func.getSelfTime());
+                assertEquals(IHostModel.TIME_UNKNOWN, func.getCpuTime());
+                assertEquals(1, func.getNbCalls());
+                assertEquals(5, func.getProcessId());
+                assertEquals(2, func.getChildren().size());
 
-            // Verify first child
-            for (AggregatedCalledFunction next : func.getChildren()) {
-                switch (next.getSymbol().toString()) {
-                case "op3":
-                    assertEquals(2, next.getDepth());
-                    assertEquals(5, next.getDuration());
-                    assertEquals(3, next.getSelfTime());
-                    assertEquals(IHostModel.TIME_UNKNOWN, next.getCpuTime());
-                    assertEquals(1, next.getNbCalls());
-                    assertEquals(5, next.getProcessId());
-                    assertEquals("op3", next.getSymbol());
-                    assertEquals(1, next.getChildren().size());
-                    AggregatedCalledFunction third = next.getChildren().iterator().next();
-                    assertNotNull(third);
-                    assertEquals(3, third.getDepth());
-                    assertEquals(2, third.getDuration());
-                    assertEquals(2, third.getSelfTime());
-                    assertEquals(IHostModel.TIME_UNKNOWN, third.getCpuTime());
-                    assertEquals(1, third.getNbCalls());
-                    assertEquals(5, third.getProcessId());
-                    assertEquals("op1", third.getSymbol());
-                    assertEquals(0, third.getChildren().size());
-                    break;
-                case "op4":
-                    assertEquals(2, next.getDepth());
-                    assertEquals(8, next.getDuration());
-                    assertEquals(8, next.getSelfTime());
-                    assertEquals(IHostModel.TIME_UNKNOWN, next.getCpuTime());
-                    assertEquals(1, next.getNbCalls());
-                    assertEquals(5, next.getProcessId());
-                    assertEquals("op4", next.getSymbol());
-                    assertEquals(0, next.getChildren().size());
-                    break;
-                default:
-                    fail("Unknown symbol for second level of tid 6");
+                for (AggregatedCallSite nextChild : func.getChildren()) {
+                    assertTrue(nextChild instanceof AggregatedCalledFunction);
+                    AggregatedCalledFunction next = (AggregatedCalledFunction) nextChild;
+                    switch (next.getSymbol().toString()) {
+                    case "op3":
+                        assertEquals(5, next.getDuration());
+                        assertEquals(3, next.getSelfTime());
+                        assertEquals(IHostModel.TIME_UNKNOWN, next.getCpuTime());
+                        assertEquals(1, next.getNbCalls());
+                        assertEquals(5, next.getProcessId());
+                        assertEquals("op3", next.getSymbol());
+                        assertEquals(1, next.getChildren().size());
+                        AggregatedCalledFunction third = (AggregatedCalledFunction) next.getChildren().iterator().next();
+                        assertNotNull(third);
+                        assertEquals(2, third.getDuration());
+                        assertEquals(2, third.getSelfTime());
+                        assertEquals(IHostModel.TIME_UNKNOWN, third.getCpuTime());
+                        assertEquals(1, third.getNbCalls());
+                        assertEquals(5, third.getProcessId());
+                        assertEquals("op1", third.getSymbol());
+                        assertEquals(0, third.getChildren().size());
+                        break;
+                    case "op4":
+                        assertEquals(8, next.getDuration());
+                        assertEquals(8, next.getSelfTime());
+                        assertEquals(IHostModel.TIME_UNKNOWN, next.getCpuTime());
+                        assertEquals(1, next.getNbCalls());
+                        assertEquals(5, next.getProcessId());
+                        assertEquals("op4", next.getSymbol());
+                        assertEquals(0, next.getChildren().size());
+                        break;
+                    default:
+                        fail("Unknown symbol for second level of tid 6");
+                    }
                 }
             }
-        }
-            break;
-        case "7": {
-            /*
-             * pid1 --- tid2 1e1 ------------- 10x1 12e4------------20x |
-             * 3e2-------7x | 4e3--5x |-- tid3 3e2
-             * --------------------------------20x 5e3--6x 7e2--------13x
-             *
-             * pid5 --- tid6 1e1 -----------------------------------20x | 2e3
-             * ---------7x 12e4------------20x | 4e1--6x |-- tid7 1e5
-             * -----------------------------------20x 2e2 +++ 6x 9e2 ++++ 13x
-             * 15e2 ++ 19x 10e3 + 11x
-             */
-            assertEquals(1, children.size());
-            AggregatedCalledFunction func = children.iterator().next();
-            assertNotNull(func);
-            assertEquals("op5", func.getSymbol());
-            assertEquals(1, func.getDepth());
-            assertEquals(19, func.getDuration());
-            assertEquals(7, func.getSelfTime());
-            assertEquals(IHostModel.TIME_UNKNOWN, func.getCpuTime());
-            assertEquals(1, func.getNbCalls());
-            assertEquals(5, func.getProcessId());
-            assertEquals(1, func.getChildren().size());
+                break;
+            case "7": {
+                /*
+                 * pid1 --- tid2 1e1 ------------- 10x1 12e4------------20x |
+                 * 3e2-------7x | 4e3--5x |-- tid3 3e2
+                 * --------------------------------20x 5e3--6x 7e2--------13x
+                 *
+                 * pid5 --- tid6 1e1 -----------------------------------20x |
+                 * 2e3 ---------7x 12e4------------20x | 4e1--6x |-- tid7 1e5
+                 * -----------------------------------20x 2e2 +++ 6x 9e2 ++++
+                 * 13x 15e2 ++ 19x 10e3 + 11x
+                 */
+                assertEquals(1, children.size());
+                AggregatedCalledFunction func = (AggregatedCalledFunction) children.iterator().next();
+                assertNotNull(func);
+                assertEquals("op5", func.getSymbol());
+                assertEquals(19, func.getDuration());
+                assertEquals(7, func.getSelfTime());
+                assertEquals(IHostModel.TIME_UNKNOWN, func.getCpuTime());
+                assertEquals(1, func.getNbCalls());
+                assertEquals(5, func.getProcessId());
+                assertEquals(1, func.getChildren().size());
 
-            // Verify children
-            Iterator<AggregatedCalledFunction> iterator = func.getChildren().iterator();
-            AggregatedCalledFunction next = iterator.next();
-            assertNotNull(next);
-            assertEquals(2, next.getDepth());
-            assertEquals(12, next.getDuration());
-            assertEquals(11, next.getSelfTime());
-            assertEquals(IHostModel.TIME_UNKNOWN, next.getCpuTime());
-            assertEquals(3, next.getNbCalls());
-            assertEquals(5, next.getProcessId());
-            assertEquals("op2", next.getSymbol());
-            assertEquals(1, next.getChildren().size());
-            AggregatedCalledFunction third = next.getChildren().iterator().next();
-            assertNotNull(third);
-            assertEquals(3, third.getDepth());
-            assertEquals(1, third.getDuration());
-            assertEquals(1, third.getSelfTime());
-            assertEquals(IHostModel.TIME_UNKNOWN, third.getCpuTime());
-            assertEquals(1, third.getNbCalls());
-            assertEquals(5, third.getProcessId());
-            assertEquals("op3", third.getSymbol());
-            assertEquals(0, third.getChildren().size());
+                // Verify children
+                Iterator<AggregatedCallSite> iterator = func.getChildren().iterator();
+                AggregatedCalledFunction next = (AggregatedCalledFunction) iterator.next();
+                assertNotNull(next);
+                assertEquals(12, next.getDuration());
+                assertEquals(11, next.getSelfTime());
+                assertEquals(IHostModel.TIME_UNKNOWN, next.getCpuTime());
+                assertEquals(3, next.getNbCalls());
+                assertEquals(5, next.getProcessId());
+                assertEquals("op2", next.getSymbol());
+                assertEquals(1, next.getChildren().size());
+                AggregatedCalledFunction third = (AggregatedCalledFunction) next.getChildren().iterator().next();
+                assertNotNull(third);
+                assertEquals(1, third.getDuration());
+                assertEquals(1, third.getSelfTime());
+                assertEquals(IHostModel.TIME_UNKNOWN, third.getCpuTime());
+                assertEquals(1, third.getNbCalls());
+                assertEquals(5, third.getProcessId());
+                assertEquals("op3", third.getSymbol());
+                assertEquals(0, third.getChildren().size());
+            }
+                break;
+            default:
+                fail("Unknown process in callstack");
+            }
         }
-            break;
-        default:
-            fail("Unknown process in callstack");
-        }
+    }
+
+    private CallGraphAnalysis getCallGraphModule() throws TmfAnalysisException {
+        CallGraphAnalysis cga = new CallGraphAnalysis();
+        cga.setId(getModule().getId());
+        cga.setTrace(getTrace());
+
+        cga.schedule();
+        cga.waitForCompletion();
+        return cga;
     }
 
     /**
@@ -353,23 +349,17 @@ public class CallGraphWithCallStackAnalysisTest extends CallStackTestBase {
 
         CallGraphAnalysis cga = getCallGraphModule();
         try {
-            Collection<AggregatedCalledFunction> threadNodes = cga.getGroupNodes();
-            assertEquals(4, threadNodes.size());
-            for (AggregatedCalledFunction rootNode : threadNodes) {
-                GroupNode groupNode = (GroupNode) rootNode;
-                ICallStackElement parentElement2 = groupNode.getElement().getParentElement();
-                assertNotNull(parentElement2);
-                ICallStackElement parentElement = parentElement2.getParentElement();
-                assertNotNull(parentElement);
-                String firstLevelName = parentElement.getName();
+            Collection<GroupNode> groups = cga.getGroups();
+            for (GroupNode group : groups) {
+                String firstLevelName = group.getName();
                 switch (firstLevelName) {
                 case "1":
                     // Make sure the symbol key is correctly resolved
-                    verifyProcess1CpuTime(groupNode);
+                    verifyProcess1CpuTime(group);
                     break;
                 case "5":
                     // Make sure the symbol key is correctly resolved
-                    verifyProcess5CpuTime(groupNode);
+                    verifyProcess5CpuTime(group);
                     break;
                 default:
                     fail("Unknown process in callstack");
@@ -378,224 +368,212 @@ public class CallGraphWithCallStackAnalysisTest extends CallStackTestBase {
         } finally {
             cga.dispose();
         }
-
     }
 
-    private static void verifyProcess1CpuTime(GroupNode groupNode) {
-        ICallStackElement parentElement2 = groupNode.getElement().getParentElement();
-        assertNotNull(parentElement2);
-        String secondLevelName = parentElement2.getName();
-        Collection<AggregatedCalledFunction> children = groupNode.getChildren();
-        switch (secondLevelName) {
-        case "2":
-            assertEquals(2, children.size());
-            for (AggregatedCalledFunction func : children) {
-                switch ((String) func.getSymbol()) {
-                case "op1":
-                    assertEquals(1, func.getDepth());
-                    assertEquals(9, func.getDuration());
-                    assertEquals(5, func.getSelfTime());
-                    assertEquals(9, func.getCpuTime());
-                    assertEquals(1, func.getNbCalls());
-                    assertEquals(1, func.getProcessId());
-                    assertEquals(1, func.getChildren().size());
-                    AggregatedCalledFunction next = func.getChildren().iterator().next();
-                    assertNotNull(next);
-                    assertEquals(2, next.getDepth());
-                    assertEquals(4, next.getDuration());
-                    assertEquals(3, next.getSelfTime());
-                    assertEquals(4, next.getCpuTime());
-                    assertEquals(1, next.getNbCalls());
-                    assertEquals(1, next.getProcessId());
-                    assertEquals("op2", next.getSymbol());
-                    assertEquals(1, next.getChildren().size());
-                    AggregatedCalledFunction third = next.getChildren().iterator().next();
-                    assertNotNull(third);
-                    assertEquals(3, third.getDepth());
-                    assertEquals(1, third.getDuration());
-                    assertEquals(1, third.getSelfTime());
-                    assertEquals(1, third.getCpuTime());
-                    assertEquals(1, third.getNbCalls());
-                    assertEquals(1, third.getProcessId());
-                    assertEquals("op3", third.getSymbol());
-                    assertEquals(0, third.getChildren().size());
-                    break;
-                case "op4":
-                    assertEquals(1, func.getDepth());
-                    assertEquals(8, func.getDuration());
-                    assertEquals(8, func.getSelfTime());
-                    assertEquals(3, func.getCpuTime());
-                    assertEquals(1, func.getNbCalls());
-                    assertEquals(1, func.getProcessId());
-                    assertEquals(0, func.getChildren().size());
-                    break;
-                default:
-                    fail("Unknown symbol for thread 2" + func.getSymbol());
+    private static void verifyProcess1CpuTime(GroupNode group) {
+        Collection<GroupNode> secondLevels = group.getChildren();
+        assertEquals(2, secondLevels.size());
+        for (GroupNode secondLevel : secondLevels) {
+            String secondLevelName = secondLevel.getName();
+            assertEquals(1, secondLevel.getChildren().size());
+            GroupNode thirdLevel = secondLevel.getChildren().iterator().next();
+            assertTrue(thirdLevel instanceof LeafGroupNode);
+            Collection<AggregatedCallSite> children = ((LeafGroupNode) thirdLevel).getAggregatedData();
+            switch (secondLevelName) {
+            case "2":
+                assertEquals(2, children.size());
+                for (AggregatedCallSite child : children) {
+                    assertTrue(child instanceof AggregatedCalledFunction);
+                    AggregatedCalledFunction func = (AggregatedCalledFunction) child;
+                    switch ((String) func.getSymbol()) {
+                    case "op1":
+                        assertEquals(9, func.getDuration());
+                        assertEquals(5, func.getSelfTime());
+                        assertEquals(9, func.getCpuTime());
+                        assertEquals(1, func.getNbCalls());
+                        assertEquals(1, func.getProcessId());
+                        assertEquals(1, func.getChildren().size());
+                        AggregatedCalledFunction next = (AggregatedCalledFunction) func.getChildren().iterator().next();
+                        assertNotNull(next);
+                        assertEquals(4, next.getDuration());
+                        assertEquals(3, next.getSelfTime());
+                        assertEquals(4, next.getCpuTime());
+                        assertEquals(1, next.getNbCalls());
+                        assertEquals(1, next.getProcessId());
+                        assertEquals("op2", next.getSymbol());
+                        assertEquals(1, next.getChildren().size());
+                        AggregatedCalledFunction third = (AggregatedCalledFunction) next.getChildren().iterator().next();
+                        assertNotNull(third);
+                        assertEquals(1, third.getDuration());
+                        assertEquals(1, third.getSelfTime());
+                        assertEquals(1, third.getCpuTime());
+                        assertEquals(1, third.getNbCalls());
+                        assertEquals(1, third.getProcessId());
+                        assertEquals("op3", third.getSymbol());
+                        assertEquals(0, third.getChildren().size());
+                        break;
+                    case "op4":
+                        assertEquals(8, func.getDuration());
+                        assertEquals(8, func.getSelfTime());
+                        assertEquals(3, func.getCpuTime());
+                        assertEquals(1, func.getNbCalls());
+                        assertEquals(1, func.getProcessId());
+                        assertEquals(0, func.getChildren().size());
+                        break;
+                    default:
+                        fail("Unknown symbol for thread 2" + func.getSymbol());
+                    }
                 }
-            }
-            break;
-        case "3":
-            assertEquals(1, children.size());
-            AggregatedCalledFunction func = children.iterator().next();
-            assertEquals("op2", func.getSymbol());
+                break;
+            case "3":
+                assertEquals(1, children.size());
+                AggregatedCalledFunction func = (AggregatedCalledFunction) children.iterator().next();
+                assertEquals("op2", func.getSymbol());
 
-            assertEquals(1, func.getDepth());
-            assertEquals(17, func.getDuration());
-            assertEquals(10, func.getSelfTime());
-            assertEquals(14, func.getCpuTime());
-            assertEquals(1, func.getNbCalls());
-            assertEquals(1, func.getProcessId());
-            assertEquals(2, func.getChildren().size());
-            for (AggregatedCalledFunction next : func.getChildren()) {
-                switch (next.getSymbol().toString()) {
-                case "op3":
-                    assertEquals(2, next.getDepth());
-                    assertEquals(1, next.getDuration());
-                    assertEquals(1, next.getSelfTime());
-                    assertEquals(1, next.getCpuTime());
-                    assertEquals(1, next.getNbCalls());
-                    assertEquals(1, next.getProcessId());
-                    assertEquals(0, next.getChildren().size());
-                    break;
-                case "op2":
-                    assertEquals(2, next.getDepth());
-                    assertEquals(6, next.getDuration());
-                    assertEquals(6, next.getSelfTime());
-                    assertEquals(3, next.getCpuTime());
-                    assertEquals(1, next.getNbCalls());
-                    assertEquals(1, next.getProcessId());
-                    assertEquals(0, next.getChildren().size());
-                    break;
-                default:
-                    fail("Unknown symbol for thread 2" + func.getSymbol());
+                assertEquals(17, func.getDuration());
+                assertEquals(10, func.getSelfTime());
+                assertEquals(14, func.getCpuTime());
+                assertEquals(1, func.getNbCalls());
+                assertEquals(1, func.getProcessId());
+                assertEquals(2, func.getChildren().size());
+                for (AggregatedCallSite nextChild : func.getChildren()) {
+                    assertTrue(nextChild instanceof AggregatedCalledFunction);
+                    AggregatedCalledFunction next = (AggregatedCalledFunction) nextChild;
+                    switch (next.getSymbol().toString()) {
+                    case "op3":
+                        assertEquals(1, next.getDuration());
+                        assertEquals(1, next.getSelfTime());
+                        assertEquals(1, next.getCpuTime());
+                        assertEquals(1, next.getNbCalls());
+                        assertEquals(1, next.getProcessId());
+                        assertEquals(0, next.getChildren().size());
+                        break;
+                    case "op2":
+                        assertEquals(6, next.getDuration());
+                        assertEquals(6, next.getSelfTime());
+                        assertEquals(3, next.getCpuTime());
+                        assertEquals(1, next.getNbCalls());
+                        assertEquals(1, next.getProcessId());
+                        assertEquals(0, next.getChildren().size());
+                        break;
+                    default:
+                        fail("Unknown symbol for thread 2" + func.getSymbol());
+                    }
                 }
+
+                break;
+            default:
+                fail("Unknown process in callstack");
             }
-            break;
-        default:
-            fail("Unknown process in callstack");
         }
     }
 
-    private static void verifyProcess5CpuTime(GroupNode groupNode) {
-        ICallStackElement parentElement2 = groupNode.getElement().getParentElement();
-        assertNotNull(parentElement2);
-        String secondLevelName = parentElement2.getName();
-        Collection<AggregatedCalledFunction> children = groupNode.getChildren();
-        switch (secondLevelName) {
-        case "6": {
-            assertEquals(1, children.size());
-            AggregatedCalledFunction func = children.iterator().next();
-            assertNotNull(func);
-            assertEquals("op1", func.getSymbol());
-            assertEquals(1, func.getDepth());
-            assertEquals(19, func.getDuration());
-            assertEquals(6, func.getSelfTime());
-            assertEquals(19, func.getCpuTime());
-            assertEquals(1, func.getNbCalls());
-            assertEquals(5, func.getProcessId());
-            assertEquals(2, func.getChildren().size());
+    private static void verifyProcess5CpuTime(GroupNode group) {
+        Collection<GroupNode> secondLevels = group.getChildren();
+        assertEquals(2, secondLevels.size());
+        for (GroupNode secondLevel : secondLevels) {
+            String secondLevelName = secondLevel.getName();
+            assertEquals(1, secondLevel.getChildren().size());
+            GroupNode thirdLevel = secondLevel.getChildren().iterator().next();
+            assertTrue(thirdLevel instanceof LeafGroupNode);
+            Collection<AggregatedCallSite> children = ((LeafGroupNode) thirdLevel).getAggregatedData();
+            switch (secondLevelName) {
+            case "6": {
+                assertEquals(1, children.size());
+                AggregatedCalledFunction func = (AggregatedCalledFunction) children.iterator().next();
+                assertNotNull(func);
+                assertEquals("op1", func.getSymbol());
+                assertEquals(19, func.getDuration());
+                assertEquals(6, func.getSelfTime());
+                assertEquals(19, func.getCpuTime());
+                assertEquals(1, func.getNbCalls());
+                assertEquals(5, func.getProcessId());
+                assertEquals(2, func.getChildren().size());
 
-            // Verify first child
-            for (AggregatedCalledFunction next : func.getChildren()) {
-                switch (next.getSymbol().toString()) {
-                case "op3":
-                    assertEquals(2, next.getDepth());
-                    assertEquals(5, next.getDuration());
-                    assertEquals(3, next.getSelfTime());
-                    assertEquals(5, next.getCpuTime());
-                    assertEquals(1, next.getNbCalls());
-                    assertEquals(5, next.getProcessId());
-                    assertEquals("op3", next.getSymbol());
-                    assertEquals(1, next.getChildren().size());
-                    AggregatedCalledFunction third = next.getChildren().iterator().next();
-                    assertNotNull(third);
-                    assertEquals(3, third.getDepth());
-                    assertEquals(2, third.getDuration());
-                    assertEquals(2, third.getSelfTime());
-                    assertEquals(2, third.getCpuTime());
-                    assertEquals(1, third.getNbCalls());
-                    assertEquals(5, third.getProcessId());
-                    assertEquals("op1", third.getSymbol());
-                    assertEquals(0, third.getChildren().size());
-                    break;
-                case "op4":
-                    assertEquals(2, next.getDepth());
-                    assertEquals(8, next.getDuration());
-                    assertEquals(8, next.getSelfTime());
-                    assertEquals(8, next.getCpuTime());
-                    assertEquals(1, next.getNbCalls());
-                    assertEquals(5, next.getProcessId());
-                    assertEquals("op4", next.getSymbol());
-                    assertEquals(0, next.getChildren().size());
-                    break;
-                default:
-                    fail("Unknown symbol for second level of tid 6");
+                for (AggregatedCallSite nextChild : func.getChildren()) {
+                    assertTrue(nextChild instanceof AggregatedCalledFunction);
+                    AggregatedCalledFunction next = (AggregatedCalledFunction) nextChild;
+                    switch (next.getSymbol().toString()) {
+                    case "op3":
+                        assertEquals(5, next.getDuration());
+                        assertEquals(3, next.getSelfTime());
+                        assertEquals(5, next.getCpuTime());
+                        assertEquals(1, next.getNbCalls());
+                        assertEquals(5, next.getProcessId());
+                        assertEquals("op3", next.getSymbol());
+                        assertEquals(1, next.getChildren().size());
+                        AggregatedCalledFunction third = (AggregatedCalledFunction) next.getChildren().iterator().next();
+                        assertNotNull(third);
+                        assertEquals(2, third.getDuration());
+                        assertEquals(2, third.getSelfTime());
+                        assertEquals(2, third.getCpuTime());
+                        assertEquals(1, third.getNbCalls());
+                        assertEquals(5, third.getProcessId());
+                        assertEquals("op1", third.getSymbol());
+                        assertEquals(0, third.getChildren().size());
+                        break;
+                    case "op4":
+                        assertEquals(8, next.getDuration());
+                        assertEquals(8, next.getSelfTime());
+                        assertEquals(8, next.getCpuTime());
+                        assertEquals(1, next.getNbCalls());
+                        assertEquals(5, next.getProcessId());
+                        assertEquals("op4", next.getSymbol());
+                        assertEquals(0, next.getChildren().size());
+                        break;
+                    default:
+                        fail("Unknown symbol for second level of tid 6");
+                    }
                 }
             }
-        }
-            break;
-        case "7": {
-            assertEquals(1, children.size());
-            AggregatedCalledFunction func = children.iterator().next();
-            assertNotNull(func);
-            assertEquals("op5", func.getSymbol());
-            assertEquals(1, func.getDepth());
-            assertEquals(19, func.getDuration());
-            assertEquals(7, func.getSelfTime());
-            assertEquals(18, func.getCpuTime());
-            assertEquals(1, func.getNbCalls());
-            assertEquals(5, func.getProcessId());
-            assertEquals(1, func.getChildren().size());
+                break;
+            case "7": {
+                /*
+                 * pid1 --- tid2 1e1 ------------- 10x1 12e4------------20x |
+                 * 3e2-------7x | 4e3--5x |-- tid3 3e2
+                 * --------------------------------20x 5e3--6x 7e2--------13x
+                 *
+                 * pid5 --- tid6 1e1 -----------------------------------20x |
+                 * 2e3 ---------7x 12e4------------20x | 4e1--6x |-- tid7 1e5
+                 * -----------------------------------20x 2e2 +++ 6x 9e2 ++++
+                 * 13x 15e2 ++ 19x 10e3 + 11x
+                 */
+                assertEquals(1, children.size());
+                AggregatedCalledFunction func = (AggregatedCalledFunction) children.iterator().next();
+                assertNotNull(func);
+                assertEquals("op5", func.getSymbol());
+                assertEquals(19, func.getDuration());
+                assertEquals(7, func.getSelfTime());
+                assertEquals(18, func.getCpuTime());
+                assertEquals(1, func.getNbCalls());
+                assertEquals(5, func.getProcessId());
+                assertEquals(1, func.getChildren().size());
 
-            Iterator<AggregatedCalledFunction> iterator = func.getChildren().iterator();
-            AggregatedCalledFunction next = iterator.next();
-            assertNotNull(next);
-            assertEquals(2, next.getDepth());
-            assertEquals(12, next.getDuration());
-            assertEquals(11, next.getSelfTime());
-            assertEquals(11, next.getCpuTime());
-            assertEquals(3, next.getNbCalls());
-            assertEquals(5, next.getProcessId());
-            assertEquals("op2", next.getSymbol());
-            assertEquals(1, next.getChildren().size());
-            // Also verify statistics
-            // AggregatedCalledFunctionStatistics stats =
-            // next.getFunctionStatistics();
-            // assertEquals(3, stats.getPerCallCalls(), 0.000);
-            // assertEquals(11, stats.getPerCallCpuTime(), 0.000);
-            // assertEquals(11, stats.getPerCallSelfTime(), 0.000);
-
-            AggregatedCalledFunction third = next.getChildren().iterator().next();
-            assertNotNull(third);
-            assertEquals(3, third.getDepth());
-            assertEquals(1, third.getDuration());
-            assertEquals(1, third.getSelfTime());
-            assertEquals(1, third.getCpuTime());
-            assertEquals(1, third.getNbCalls());
-            assertEquals(5, third.getProcessId());
-            assertEquals("op3", third.getSymbol());
-            assertEquals(0, third.getChildren().size());
-
-            // Also verify statistics
-            // stats = third.getFunctionStatistics();
-            // assertEquals(1.0, stats.getPerCallCalls(), 0.000);
-            // assertEquals(1, stats.getPerCallCpuTime(), 0.000);
-            // assertEquals(1, stats.getPerCallSelfTime(), 0.000);
-
-            /**
-             * * pid1 ___ tid2 1e1 +++++++++++++ 10x1 12e4+++++++++++ 20x |
-             * 3e2+++++++7x | 4e3++5x |__ tid3 3e2
-             * +++++++++++++++++++++++++++++++ 20x 5e3++6x 7e2++++++++13x
-             *
-             * pid5 ___ tid6 1e1 ++++++++++++++++++++++++++++++++++ 20x | 2e3
-             * +++++++++7x 12e4+++++++++++ 20x | 4e1++6x |__ tid7 1e5
-             * ++++++++++++++++++++++++++++++++++ 20x 2e2 +++ 6x 9e2 ++++ 13x
-             * 15e2 ++ 19x 10e3 + 11x
-             */
-        }
-            break;
-        default:
-            fail("Unknown process in callstack");
+                // Verify children
+                Iterator<AggregatedCallSite> iterator = func.getChildren().iterator();
+                AggregatedCalledFunction next = (AggregatedCalledFunction) iterator.next();
+                assertNotNull(next);
+                assertEquals(12, next.getDuration());
+                assertEquals(11, next.getSelfTime());
+                assertEquals(11, next.getCpuTime());
+                assertEquals(3, next.getNbCalls());
+                assertEquals(5, next.getProcessId());
+                assertEquals("op2", next.getSymbol());
+                assertEquals(1, next.getChildren().size());
+                AggregatedCalledFunction third = (AggregatedCalledFunction) next.getChildren().iterator().next();
+                assertNotNull(third);
+                assertEquals(1, third.getDuration());
+                assertEquals(1, third.getSelfTime());
+                assertEquals(1, third.getCpuTime());
+                assertEquals(1, third.getNbCalls());
+                assertEquals(5, third.getProcessId());
+                assertEquals("op3", third.getSymbol());
+                assertEquals(0, third.getChildren().size());
+            }
+                break;
+            default:
+                fail("Unknown process in callstack");
+            }
         }
     }
 

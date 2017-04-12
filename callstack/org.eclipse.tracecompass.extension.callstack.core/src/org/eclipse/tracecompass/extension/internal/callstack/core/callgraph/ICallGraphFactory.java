@@ -9,33 +9,17 @@
 
 package org.eclipse.tracecompass.extension.internal.callstack.core.callgraph;
 
-import java.util.Collection;
-
 import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackGroupDescriptor;
 
 /**
- * Interface that analyses who provide callgraph
- *
  * @author Geneviève Bastien
  */
-public interface ICallGraphProvider {
+public interface ICallGraphFactory {
 
-    /**
-     * Get the groups
-     *
-     * @return
-     */
-    Collection<GroupNode> getGroups();
+    GroupNode createGroupNode(String name, ICallStackGroupDescriptor descriptor);
 
-    Collection<ICallStackGroupDescriptor> getGroupDescriptor();
+    LeafGroupNode createLeafGroup(String name, ICallStackGroupDescriptor descriptor);
 
-    /**
-     * Set the group descriptor by which to group the callgraph data
-     *
-     * @param descriptor
-     *            The descriptor by which to group the callgraph elements, or
-     *            <code>null</code> will group them all together
-     */
-    void setGroupBy(ICallStackGroupDescriptor descriptor);
+    AggregatedCallSite createAggregatedCallSite(Object symbol);
 
 }

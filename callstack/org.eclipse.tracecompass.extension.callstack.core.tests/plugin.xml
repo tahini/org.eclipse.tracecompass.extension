@@ -5,7 +5,7 @@
          point="org.eclipse.linuxtools.tmf.core.analysis">
       <module
             analysis_module="org.eclipse.tracecompass.extension.callstack.timing.core.tests.stubs.CallStackAnalysisStub"
-            id="org.eclipse.tracecompass.analysis.timing.core.tests.callstack"
+            id="org.eclipse.tracecompass.extension.callstack.core.tests.callstack"
             name="Test Callstack">
          <tracetype
                class="org.eclipse.tracecompass.tmf.tests.stubs.trace.xml.TmfXmlTraceStub">

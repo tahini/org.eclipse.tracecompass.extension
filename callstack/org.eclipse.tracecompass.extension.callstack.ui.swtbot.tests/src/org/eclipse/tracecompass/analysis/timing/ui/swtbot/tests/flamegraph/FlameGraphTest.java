@@ -15,6 +15,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Spliterator;
@@ -103,7 +104,7 @@ public class FlameGraphTest extends AggregationTreeTest {
     }
 
     private void loadFlameGraph() {
-        UIThreadRunnable.syncExec(() -> fFg.buildFlameGraph(getCga()));
+        UIThreadRunnable.syncExec(() -> fFg.buildFlameGraph(Collections.singleton(getCga())));
         try {
             fFg.waitForUpdate();
         } catch (InterruptedException e) {

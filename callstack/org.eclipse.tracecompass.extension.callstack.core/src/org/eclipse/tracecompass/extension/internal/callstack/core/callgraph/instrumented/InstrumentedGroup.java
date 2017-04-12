@@ -7,30 +7,19 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
 
-package org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.profiling;
+package org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.instrumented;
 
 import org.eclipse.jdt.annotation.NonNull;
-import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.AggregatedCallSite;
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.LeafGroupNode;
+import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackGroupDescriptor;
 
 /**
  * @author Geneviève Bastien
  */
-public class AggregatedStackTraces extends AggregatedCallSite {
+public class InstrumentedGroup extends LeafGroupNode {
 
-    public AggregatedStackTraces(Object symbol) {
-        super(symbol);
-    }
-
-    private int fCount = 1;
-
-    @Override
-    public long getLength() {
-        return fCount;
-    }
-
-    @Override
-    protected void mergeData(@NonNull AggregatedCallSite child) {
-        fCount += child.getLength();
+    public InstrumentedGroup(@NonNull String name, ICallStackGroupDescriptor descriptor) {
+        super(name, descriptor);
     }
 
 }

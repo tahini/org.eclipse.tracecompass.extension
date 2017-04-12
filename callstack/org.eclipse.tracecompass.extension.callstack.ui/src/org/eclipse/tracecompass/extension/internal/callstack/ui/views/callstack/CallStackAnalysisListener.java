@@ -9,6 +9,8 @@
 
 package org.eclipse.tracecompass.extension.internal.callstack.ui.views.callstack;
 
+import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.ICallGraphProvider;
+import org.eclipse.tracecompass.extension.internal.callstack.ui.flamegraph.FlameGraphView;
 import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackProvider;
 import org.eclipse.tracecompass.tmf.core.analysis.IAnalysisModule;
 import org.eclipse.tracecompass.tmf.core.analysis.ITmfNewAnalysisModuleListener;
@@ -27,6 +29,9 @@ public class CallStackAnalysisListener implements ITmfNewAnalysisModuleListener 
     public void moduleCreated(IAnalysisModule module) {
         if (module instanceof ICallStackProvider) {
             module.registerOutput(new TmfAnalysisViewOutput(CallStackView.ID));
+        }
+        if (module instanceof ICallGraphProvider) {
+            module.registerOutput(new TmfAnalysisViewOutput(FlameGraphView.ID + ':' + module.getId()));
         }
     }
 

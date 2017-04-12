@@ -11,9 +11,10 @@ package org.eclipse.tracecompass.extension.internal.callstack.core.callgraph;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
-import org.eclipse.jdt.annotation.Nullable;
+import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackGroupDescriptor;
 
 /**
  * @author Geneviève Bastien
@@ -21,10 +22,12 @@ import org.eclipse.jdt.annotation.Nullable;
 public class GroupNode {
 
     private final String fName;
+    private final ICallStackGroupDescriptor fDescriptor;
     private final List<GroupNode> fChildren = new ArrayList<>();
 
-    public GroupNode(String name) {
+    public GroupNode(String name, ICallStackGroupDescriptor descriptor) {
         fName = name;
+        fDescriptor = descriptor;
     }
 
     public String getName() {
@@ -39,9 +42,16 @@ public class GroupNode {
         fChildren.add(node);
     }
 
-    public @Nullable Collection<AggregatedCallSite> getAggregatedData() {
-        return null;
+    public Collection<AggregatedCallSite> getAggregatedData() {
+        return Collections.emptyList();
     }
 
+    public boolean isLeaf() {
+        return false;
+    }
+
+    public ICallStackGroupDescriptor getGroupDescriptor() {
+        return fDescriptor;
+    }
 
 }

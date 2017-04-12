@@ -9,6 +9,7 @@
 
 package org.eclipse.tracecompass.extension.internal.callstack.core.callgraph;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,8 +39,8 @@ public abstract class AggregatedCallSite {
         return fParent;
     }
 
-    public Map<Object, AggregatedCallSite> getChildren() {
-        return fChildren;
+    public Collection<AggregatedCallSite> getChildren() {
+        return fChildren.values();
     }
 
     public void addChild(AggregatedCallSite child) {
@@ -53,7 +54,15 @@ public abstract class AggregatedCallSite {
         }
     }
 
-    protected abstract void merge(AggregatedCallSite child);
+    public final void merge(AggregatedCallSite other) {
+        if (!other.getSymbol().equals(getSymbol())) {
+            throw new IllegalArgumentException("AggregatedStackTraces: trying to merge stack traces of different symbols"); //$NON-NLS-1$
+        }
+        mergeData(other);
+        mergeChildren(other);
+    }
+
+    protected abstract void mergeData(AggregatedCallSite other);
 
     protected void mergeChildren(AggregatedCallSite other) {
         for (AggregatedCallSite otherChildSite : other.fChildren.values()) {
