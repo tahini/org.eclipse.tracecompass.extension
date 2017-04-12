@@ -24,6 +24,7 @@ import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.prof
 import org.eclipse.tracecompass.extension.internal.callstack.core.callgraph.profiling.SampledCallGraphFactory;
 import org.eclipse.tracecompass.extension.internal.perf.profiling.core.Activator;
 import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.ICallStackGroupDescriptor;
+import org.eclipse.tracecompass.extension.internal.provisional.callstack.timing.core.callstack.IEventCallStackProvider;
 import org.eclipse.tracecompass.tmf.core.analysis.TmfAbstractAnalysisModule;
 import org.eclipse.tracecompass.tmf.core.event.ITmfEvent;
 import org.eclipse.tracecompass.tmf.core.event.ITmfEventField;
@@ -37,7 +38,7 @@ import org.eclipse.tracecompass.tmf.core.trace.experiment.TmfExperiment;
 
 import com.google.common.collect.ImmutableList;
 
-public class PerfCallchainAnalysisModule extends TmfAbstractAnalysisModule implements ICallGraphProvider {
+public class PerfCallchainAnalysisModule extends TmfAbstractAnalysisModule implements ICallGraphProvider, IEventCallStackProvider {
 
     private ITmfEventRequest fRequest;
     private final Map<Long, GroupNode> fProcessGroups = new HashMap<>();
@@ -175,8 +176,6 @@ public class PerfCallchainAnalysisModule extends TmfAbstractAnalysisModule imple
         }
 
         return CallGraphGroupBy.groupCallGraphBy(groupBy, groups, SampledCallGraphFactory.getInstance());
-
-
     }
 
     @Override
@@ -187,6 +186,15 @@ public class PerfCallchainAnalysisModule extends TmfAbstractAnalysisModule imple
     @Override
     public void setGroupBy(@Nullable ICallStackGroupDescriptor descriptor) {
         fGroupBy = descriptor;
+    }
+
+    @Override
+    public Map<String, Collection<Object>> getCallStack(@NonNull ITmfEvent event) {
+        ITmfEventField field = event.getContent().getField("perf_callchain");
+        if (field == null) {
+            return new HashMap<>();
+        }
+        return new HashMap<>();
     }
 
 }
