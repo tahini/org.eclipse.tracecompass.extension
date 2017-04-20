@@ -25,6 +25,9 @@ baseDir = os.path.dirname(os.path.realpath(__file__))
 
 def copyAndUpdate(srcDir, destDir, name, id):
     shutil.copytree(srcDir, destDir)
+    # Rename the project file so the project is picked up
+    shutil.move(destDir + '/.project.skel' , destDir + '/.project')
+    # Update the files to replace all occurences of the placeholders by their value
     for dname, dirs, files in os.walk(destDir):
         for fname in files:
             fpath = os.path.join(dname, fname)
@@ -43,6 +46,14 @@ def copyDirs(fullname, dir, noUi):
     moveTo = dir + '/org.eclipse.tracecompass.extension.' + id
     print('Copying skeleton directories to ' + moveTo + '[.*]')
     copyAndUpdate(baseDir + '/skeleton.feature', moveTo, fullname, id)
+    # Remove the commented plugin if a UI plugin is present
+    if not(noUi):
+        with open(moveTo + "/feature.xml", encoding = "ISO-8859-1") as f:
+            s = f.read()
+        s = s.replace("<!-- no-ui", "")
+        s = s.replace("-->", "")
+        with open(fpath, "w") as f:
+            f.write(s)
     copyAndUpdate(baseDir + '/skeleton.core', moveTo + '.core', fullname, id)
     # Move the Activator of the core
     os.makedirs(moveTo + '.core/src/org/eclipse/tracecompass/extension/internal/' + id.replace('.', '/') + '/core')
